@@ -1,5 +1,5 @@
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional
+from pydantic import BaseModel
 
 
 class ParameterProperty(BaseModel):
@@ -14,7 +14,7 @@ class ReturnSpec(BaseModel):
 class FunctionDefinition(BaseModel):
     name: str
     description: str
-    parameters: Dict[str: ParameterProperty]
+    parameters: Dict[str, ParameterProperty]
     returns: ReturnSpec
 
 

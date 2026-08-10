@@ -1,0 +1,3 @@
+# TODO: Maybe rename this to something actually usefull
+class CallMeError(Exception):
+    ...
