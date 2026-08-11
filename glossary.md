@@ -128,7 +128,7 @@ In this project, `functions_definition.json` defines things such as:
 
 The generated function call must follow this schema exactly: required keys must be present, types must match, and extra keys are not allowed.
 
-**Think:** *What exact JSON structure and types does this function call require?*
+**Think:** *What exact JSON structure and types does this function call require? Or even if this is valid JSON, is it the right function call?*
 
 ---
 
