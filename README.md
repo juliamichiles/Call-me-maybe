@@ -11,6 +11,7 @@
 ### LLMs:
 - https://www.youtube.com/watch?v=wjZofJX0v4M&pp=ygUOMSBibHVlIDMgYnJvd24%3D
 - https://www.youtube.com/watch?v=IHZwWFHWa-w&t=615s&pp=ygUOMSBibHVlIDMgYnJvd24%3D
+- https://www.youtube.com/watch?v=xpvFinvqRCA
 
 ### JSON schema:
 - https://www.youtube.com/watch?v=TAgUvtKLOOE
