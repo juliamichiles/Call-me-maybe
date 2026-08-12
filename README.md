@@ -18,3 +18,6 @@
 
 ### Tokens:
 - https://www.youtube.com/watch?v=6FIvLzTU_3s
+
+### Constraint decoding:
+- https://pub.towardsai.net/constrained-decoding-forcing-llms-to-respect-your-taxonomy-3aaaf13329f9
