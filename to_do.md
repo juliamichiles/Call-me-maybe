@@ -22,3 +22,7 @@
 ## Structure:
 - [ ] Do we really want to keep call_me_maybe subdir inside src?
 - [ ] Add call_me to ALL files name, bc why not? as in call_me_schema
+
+## General:
+- [ ] Ensure all docstrings contains what subject requires and are PEP-whatever
+    compliant

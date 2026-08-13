@@ -8,9 +8,13 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
+    "llm-sdk",
     "numpy>=2.2.6",
     "pydantic>=2.13.4",
 ]
+
+[tool.uv.sources]
+llm-sdk = { path = "llm_sdk" }
 
 [project.scripts]
 call-me-maybe = "call_me_maybe:main"
