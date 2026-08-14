@@ -18,7 +18,7 @@ class FunctionDefinition(BaseModel):
     returns: ReturnSpec
 
 
-class PromtTest(BaseModel):
+class PromptTest(BaseModel):
     prompt: str
 
 

@@ -1,5 +1,4 @@
-# TODO: actually write stuff on __init__ + proper prettier imports
-from src.call_me_maybe.schemas import FunctionDefinition, PromtTest
+from .schemas import FunctionDefinition, PromptTest
 from pydantic import ValidationError
 from pathlib import Path
 from typing import List
@@ -7,6 +6,8 @@ import json
 import sys
 
 
+# FIXME: Either add writing output method here or rename to input or loaders
+# FIXME: NOT OOP!! Is that ok?
 # TODO: raise custom errors instead of printing them here directly?
 def load_functions_definition(path: str) -> List[FunctionDefinition]:
     try:

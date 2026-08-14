@@ -3,7 +3,7 @@ from typing import Dict
 import json 
 
 
-class VocabManager:
+class VocabularyManager:
     """Loads vocabulary and maps token IDs to clean string representations."""
 
     def __init__(self, vocab_file_path: str) -> None:
