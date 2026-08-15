@@ -11,6 +11,7 @@
 - [ ] raise custom errors instead of printing them directly on IO?
 - [ ] io.py is currently NOT object oriented?
 - [X] Added untested and full of errors version of state_machine
+- [ ] Test state_machine using pytest
 
 ## Before submission:
 - [ ] uv.lock exists

@@ -1,3 +1,7 @@
+
+# Trie algorithm:
+VocabularyTrie efficiently retrieves token IDs given a prefix in O(L) time (L beingthe prefix length).
+
 # Resources:
 
 ### FMS:
