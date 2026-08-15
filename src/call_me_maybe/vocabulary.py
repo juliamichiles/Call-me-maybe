@@ -1,6 +1,7 @@
-from src.call_me_maybe.trie import VocabularyTrie
 from typing import Dict
 import json 
+
+from .trie import VocabularyTrie
 
 
 class VocabularyManager:
@@ -9,7 +10,7 @@ class VocabularyManager:
     def __init__(self, vocab_file_path: str) -> None:
         self.vocab_path = vocab_file_path
         self.id_to_token: Dict[int, str] = {}
-        self.token_to_id: Dict[str, int] = {}
+        self.token_to_id: Dict[str, int] = {} # REMOVE?? Not sure I'll use
         self.trie = VocabularyTrie()
         self._load_and_build()
 

@@ -1,9 +1,10 @@
-from .schemas import FunctionDefinition, PromptTest
 from pydantic import ValidationError
 from pathlib import Path
 from typing import List
 import json
 import sys
+
+from .schemas import FunctionDefinition, PromptTest
 
 
 # FIXME: Either add writing output method here or rename to input or loaders

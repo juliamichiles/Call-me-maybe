@@ -10,6 +10,7 @@
 - [ ] actually write stuff on __init__ + proper prettier imports
 - [ ] raise custom errors instead of printing them directly on IO?
 - [ ] io.py is currently NOT object oriented?
+- [X] Added untested and full of errors version of state_machine
 
 ## Before submission:
 - [ ] uv.lock exists
@@ -26,3 +27,6 @@
 ## General:
 - [ ] Ensure all docstrings contains what subject requires and are PEP-whatever
     compliant
+- [ ] Maybe state machine is too strict abt input file format, as in:
+    - only accepts double quotes for dicts - would single quotes be valid JSON?
+    - parameter types have limited names and must be lowercase
