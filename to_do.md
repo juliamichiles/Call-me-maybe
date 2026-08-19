@@ -1,9 +1,19 @@
+## Next:
+- [ ] (see tests)
+- [ ] write orchestrator that will call state_machine and trie
+
 ## Environment and Makefile:
 - [ ] Ensure we actually used all dependencies on uv
 - Ensure Makefile actually respects subject requirements
 - [X] Update Makefile as project grows
     - [X]  add linters
 - [ ] can have custom max_line_len in .flake8 file? Don't think so...
+
+## Testing:
+- [ ] write a "main" for state_machine:
+    - print data structures
+    - print state and buffer content for each iteration
+    - try to actually see it working
 
 
 ## SRC:
@@ -14,6 +24,7 @@
 - [ ] Test state_machine using pytest
 
 ## Before submission:
+- [ ] Ensure subject hasn't changed
 - [ ] uv.lock exists
 - [ ] pyproject.toml exists
 - [ ] make run works

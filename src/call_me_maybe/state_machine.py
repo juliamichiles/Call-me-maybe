@@ -12,10 +12,9 @@ class CurrentState(Enum):
     # FIXME: Rename this class?
     """Enumeration of possible states in the JSON state machine."""
     START = auto()
-    EXTRACT_STRING = auto()
-    CHOICE = auto()
+    CHOOSE_FUNCTION = auto()
     NUMBER = auto()
-    STRING_VAL = auto()
+    STRING = auto()
     BOOLEAN = auto()
     END = auto()
 
@@ -29,7 +28,7 @@ class JSONStateMachine:
             prompt_txt: str,
             funcs: List[FunctionDefinition],
             vocab_mgr: VocabularyManager
-        ) -> None:
+        )-> None:
         """Initialize the state machine with prompt, functions, and vocabulary.
 
         Args:
@@ -42,7 +41,7 @@ class JSONStateMachine:
         self.vocab_mgr = vocab_mgr
         self.selected_function: Optional[FunctionDefinition] = None
         self.current_buffer: str = ""
-        self.current_state: CurrentState.START
+        self.current_state: CurrentState = CurrentState.START
         self.param_queue: List[str] = []
 
     def get_current_state(self) -> CurrentState:
@@ -71,7 +70,7 @@ class JSONStateMachine:
             token_str = self._get_token_str(token_input)
         else:
             token_str = token_input
-        self.current_buffer += token_input
+        self.current_buffer += token_str
         self._update_internal_state()
 
     def _get_token_str(self, token_id: int) -> str:
@@ -96,14 +95,14 @@ class JSONStateMachine:
     def _update_internal_state(self) -> None:
         """Analyze current_buffer and update internal state and param queue."""
 
-        if self.selected_function in None:
-            for fn in self.current_buffer:
-                prefix = f'{{"name:" "{fn.name}"'
+        if self.selected_function is None:
+            for fn in self.functions:
+                prefix = f'{{"name": "{fn.name}"'
                 if prefix in self.current_buffer:
                     self.selected_function = fn
                     self.param_queue = list(fn.parameters.keys())
-                    self.current_state = CurrentState.CHOICE
-                    break
+                    self.current_state = CurrentState.CHOOSE_FUNCTION
+                    return # should really return not break?
 
         if self.selected_function is not None:
             if self.param_queue:
@@ -116,7 +115,7 @@ class JSONStateMachine:
                 if p_type == "number":
                     self.current_state = CurrentState.NUMBER
                 if p_type == "string":
-                    self.current_state = CurrentState.STRING_VAL
+                    self.current_state = CurrentState.STRING
                 if p_type == "boolean":
                     self.current_state = CurrentState.BOOLEAN
 
@@ -158,7 +157,7 @@ class JSONStateMachine:
             return set()
         if self.current_state == CurrentState.END:
             return set()
-        if allowed_ids: Set[int] = set()
+        allowed_ids: Set[int] = set()
         for token_id, token_str in vocab_dict.items():
             if self._is_candidate_valid(token_str):
                 allowed_ids.add(token_id)
@@ -238,7 +237,7 @@ class JSONStateMachine:
                 ):
             return True
 
-        norm_comb = "".join(combined_str.split())
+        norm_combined = "".join(combined_str.split())
         norm_target = "".join(target_str.split())
         return norm_target.startswith(norm_combined) or norm_combined.startswith(
             norm_target
@@ -251,7 +250,7 @@ class JSONStateMachine:
             Dictionary containing 'name' and 'parameters'.
 
         Raises:
-            ValueError: If current_buffer cannot be parsed as valid JSON.
+            CallMeError: If current_buffer cannot be parsed as valid JSON.
         """
         try:
             data = json.loads(self.current_buffer)
