@@ -6,3 +6,4 @@
 14.08.26 - 3h20 - restructured the whole thing, changed imports
 15.08.26 - 4h30 - added state machine
 19.08.26 - 2h00 - testing/debugging state machine + pytest
+20.08.26 - 4h00 - restructuring state machine + starting pipeline

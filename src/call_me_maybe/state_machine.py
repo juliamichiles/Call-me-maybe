@@ -2,6 +2,7 @@ from typing import Optional, List, Dict, Any, Set, Union
 from enum import Enum, auto
 import json
 import re
+from typing_extensions import evaluate_forward_ref
 
 from .schemas import FunctionDefinition  # ver se o flake8 deixa isso assim
 from .vocabulary import VocabularyManager  # achei organizado
@@ -43,6 +44,16 @@ class JSONStateMachine:
         self.current_buffer: str = ""
         self.current_state: CurrentState = CurrentState.START
         self.param_queue: List[str] = []
+        self.value_tokens: Set[int] = set()
+        self._precompute_value_tokens()
+    
+    def _precompute_value_tokens(self) -> None:
+        """Pre-computes a subset of tokens for numbers and booleans."""
+        for token_id, token_str in self.vocab_mgr.id_to_token.items():
+            # Matches digits, decimals, minus, boolean parts, spaces, 
+            # commas, and braces
+            if re.match(r'^[\d\.\-\s,\}truefals]+$', token_str, re.IGNORECASE):
+                self.value_tokens.add(token_id)
 
     def get_current_state(self) -> CurrentState:
         """Return the current state of the state machine.
@@ -50,6 +61,7 @@ class JSONStateMachine:
         Returns:
             The active CurrentState enum value.
         """
+        # Maybe just get rid of this?? Don't actually use it here!!
         return self.current_state
 
     def is_complete(self) -> bool:
@@ -84,14 +96,6 @@ class JSONStateMachine:
         """
         return self.vocab_mgr.id_to_token.get(token_id, "")
 
-    def _get_vocab_id_dict(self) -> Dict[int, str]:
-        """Retrieve the vocabulary mapping dictionary from vocabulary manager.
-
-        Returns:
-            Dictionary mapping token IDs to string tokens.
-        """
-        return getattr(self.vocab_mgr, "id_to_token", {}) # can I do that?
-
     def _update_internal_state(self) -> None:
         """Analyze current_buffer and update internal state and param queue."""
 
@@ -125,6 +129,51 @@ class JSONStateMachine:
         if not self.param_queue:
             if self.current_buffer.rstrip().endswith("}}"):
                 self.current_state = CurrentState.END
+
+    def _get_candidate_tokens(self) -> Set[int]:
+        """Dramatically reduces the search space using the VocabularyTrie."""
+        if self.current_state == CurrentState.STRING:
+            return set(self.vocab_mgr.id_to_token.keys)
+
+        candidate_ids: Set[int] = set()
+
+        if self.current_state in (CurrentState.NUMBER, CurrentState.BOOLEAN):
+            candidate_ids.update(self.value_tokens)
+
+        targets: List[str] = []
+        if self.selected_function is None:
+            for fn in self.functions:
+                targets.append(f'{{"name": "{fn.name}", "parameters": {{')
+        else:
+            fn = self.selected_function
+            header = f'{{"name": "{fn.name}", "parameters": {{'
+            if not self.current_buffer.startswith(header):
+                targets.append(header)
+            elif not self.param_queue:
+                targets.append('}}')
+            else:
+                current_pname = self.param_queue[0]
+                targets.append(f'"{current_pname}": ')
+                targets.append(', "')
+                targets.append('}}')
+
+        for target in targets:
+            overlap_len = 0
+            max_check = min(len(self.current_buffer), len(target))
+            # Find the longest suffix of the buffer that matches a prefix 
+            # of the target
+            for i in range(1, max_check + 1):
+                if target.startswith(self.current_buffer[-i:]):
+                    overlap_len = i
+            remainder = target[overlap_len:]
+            if remainder:
+                get_tokens_for_pref = self.vocab_mgr.trie.get_tokens_for_prefix
+                candidate_ids.update(get_tokens_for_pref(remainder))
+                for i is range(1, len(remainder) + 1):
+                    prefix_sub = remainder[:i]
+                    if prefix_sub in self.vocab_mgr.token_to_id:
+                        candidate_ids.add(self.vocab_mgr.token_to_id[prefix_sub])
+        return candidate_ids
 
     def _is_param_complete(self, p_name: str, p_type: str) -> bool:
         """Check if parameter value has been fully generated in current_buffer.
