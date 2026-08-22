@@ -48,7 +48,9 @@ class JSONStateMachine:
         self._precompute_value_tokens()
     
     def _precompute_value_tokens(self) -> None:
-        """Pre-computes a subset of tokens for numbers and booleans."""
+        """Build a coarse candidate set once to avoid scanning the vocabulary
+            on every generation step.
+        """
         for token_id, token_str in self.vocab_mgr.id_to_token.items():
             # Matches digits, decimals, minus, boolean parts, spaces, 
             # commas, and braces
@@ -106,7 +108,7 @@ class JSONStateMachine:
                     self.selected_function = fn
                     self.param_queue = list(fn.parameters.keys())
                     self.current_state = CurrentState.CHOOSE_FUNCTION
-                    return # should really return not break?
+                    break  # should really break not return?
 
         if self.selected_function is not None:
             if self.param_queue:
@@ -133,7 +135,7 @@ class JSONStateMachine:
     def _get_candidate_tokens(self) -> Set[int]:
         """Dramatically reduces the search space using the VocabularyTrie."""
         if self.current_state == CurrentState.STRING:
-            return set(self.vocab_mgr.id_to_token.keys)
+            return set(self.vocab_mgr.id_to_token.keys())
 
         candidate_ids: Set[int] = set()
 
@@ -169,7 +171,7 @@ class JSONStateMachine:
             if remainder:
                 get_tokens_for_pref = self.vocab_mgr.trie.get_tokens_for_prefix
                 candidate_ids.update(get_tokens_for_pref(remainder))
-                for i is range(1, len(remainder) + 1):
+                for i in range(1, len(remainder) + 1):
                     prefix_sub = remainder[:i]
                     if prefix_sub in self.vocab_mgr.token_to_id:
                         candidate_ids.add(self.vocab_mgr.token_to_id[prefix_sub])
