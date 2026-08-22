@@ -196,18 +196,17 @@ class JSONStateMachine:
         return bool(re.search(patt, self.current_buffer))
 
     def get_allowed_token_ids(self) -> Set[int]:
-        """Determine allowed next token IDs based on current state and buffer.
+        """Determine allowed next token IDs using Trie to optimize Token selection.
 
         Returns:
             Set of valid token IDs allowed for the next generation step.
         """
-        vocab_dict = self._get_vocab_id_dict()
-        if not vocab_dict:
-            return set()
         if self.current_state == CurrentState.END:
             return set()
+        candidate_ids = self._get_candidate_tokens()
         allowed_ids: Set[int] = set()
-        for token_id, token_str in vocab_dict.items():
+        for token_id in candidate_ids:
+            token_str = self.vocab_mgr.id_to_token[token_id]
             if self._is_candidate_valid(token_str):
                 allowed_ids.add(token_id)
         return allowed_ids
