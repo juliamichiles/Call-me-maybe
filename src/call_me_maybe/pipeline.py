@@ -1,8 +1,14 @@
-from typing import List, Set
+from typing import List, Set, Dict, Any, TYPE_CHECKING
 import numpy as np 
 
 from .schemas import FunctionDefinition 
 from .state_machine import JSONStateMachine
+from .vocabulary import VocabularyManager
+from .errors import CallMeError
+from .state_machine import JSONStateMachine
+
+if TYPE_CHECKING:
+    from llm_sdk import Small_LLM_Model
 
 
 def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:
@@ -22,8 +28,8 @@ def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:
     return int(np.argmax(constrained_logits))
 
 
-# TODO: Either add more stuff here or just keep it as a function
 class Generation:
+    @staticmethod
     def _format_prompt(
             user_prompt: str, 
             functions: List[FunctionDefinition]
@@ -38,3 +44,35 @@ class Generation:
                 "Output JSON:"
         )
         return formatted
+
+    def gen_function_call(
+            self,
+            model: "Small_LLM_Model",  # Keep as a str even with TYPE_CHECKING?
+                                       # Shouldn't instantiate actual model???
+            prompt_txt: str,
+            functions: List[FunctionDefinition],
+            vocab_mgr: VocabularyManager,
+            max_tokens: int = 150
+    ) -> Dict[str, Any]:
+        """Generates a schema-compliant JSON function call for a single 
+                prompt.
+        """
+        formatted_prompt = self._format_prompt(prompt_txt, functions)
+        input_ids: List[int] = model.encode(formatted_prompt).tolist()[0]
+        state_machine = JSONStateMachine(prompt_txt, functions, vocab_mgr)
+
+        for _ in range(max_tokens):
+            if state_machine.is_complete():
+                break
+            logits = model.get_logits_from_input_ids(input_ids)
+            allowed_ids = state_machine.get_allowed_token_ids()
+            next_token = select_next_token(logits, allowed_ids)
+            state_machine.update(next_token)
+            input_ids.append(next_token)
+
+        result = state_machine.get_result_dict()
+        return {
+                "prompt": prompt_txt,
+                "name": result.get("name", ""),
+                "parameters": result.get("parameters", {})
+        }

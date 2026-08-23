@@ -2,12 +2,13 @@ from typing import Optional, List, Dict, Any, Set, Union
 from enum import Enum, auto
 import json
 import re
-from typing_extensions import evaluate_forward_ref
 
-from .schemas import FunctionDefinition  # ver se o flake8 deixa isso assim
-from .vocabulary import VocabularyManager  # achei organizado
+from .schemas import FunctionDefinition
+from .vocabulary import VocabularyManager
 from .errors import CallMeError
 
+# FIXME: Regex patterns may be too naif, don't handle escaped chars properly
+# FIXME: I think it should handle more words than number, boolean and string
 
 class CurrentState(Enum):
     # FIXME: Rename this class?
@@ -56,15 +57,6 @@ class JSONStateMachine:
             # commas, and braces
             if re.match(r'^[\d\.\-\s,\}truefals]+$', token_str, re.IGNORECASE):
                 self.value_tokens.add(token_id)
-
-    def get_current_state(self) -> CurrentState:
-        """Return the current state of the state machine.
-
-        Returns:
-            The active CurrentState enum value.
-        """
-        # Maybe just get rid of this?? Don't actually use it here!!
-        return self.current_state
 
     def is_complete(self) -> bool:
         """Check if the state machine has reached the END state.
@@ -120,9 +112,9 @@ class JSONStateMachine:
 
                 if p_type == "number":
                     self.current_state = CurrentState.NUMBER
-                if p_type == "string":
+                elif p_type == "string":
                     self.current_state = CurrentState.STRING
-                if p_type == "boolean":
+                elif p_type == "boolean":
                     self.current_state = CurrentState.BOOLEAN
 
                 if self._is_param_complete(current_pname, p_type):

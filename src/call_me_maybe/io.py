@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 from pathlib import Path
 from typing import List
+import argparse
 import json
 
 from .schemas import FunctionDefinition, PromptTest
@@ -40,3 +41,4 @@ def load_input_prompts(path: str) -> List[PromptTest]:
         raise CallMeError(
                 f"Invalid input prompts file format {e}",
         )
+
