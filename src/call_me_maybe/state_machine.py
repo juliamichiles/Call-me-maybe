@@ -134,7 +134,7 @@ class JSONStateMachine:
         ids.update(self.vocab_mgr.tokens_for_prefix(remainder))
         for i in range(1, len(remainder) + 1):
             prefix_sub = remainder[:i]
-            token_set = self.vocab_mgr.token_to_id(prefix_sub)
+            token_set = self.vocab_mgr.token_to_id.get(prefix_sub)
             if token_set:
                 ids.update(token_set)
         return tuple(ids)
