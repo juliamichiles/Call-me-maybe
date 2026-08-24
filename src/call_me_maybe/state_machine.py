@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Optional, List, Dict, Any, Set, Union
 from enum import Enum, auto
 import json
@@ -123,6 +124,20 @@ class JSONStateMachine:
         if not self.param_queue:
             if self.current_buffer.rstrip().endswith("}}"):
                 self.current_state = CurrentState.END
+    
+    @lru_cache(maxsize=4096)
+    def _cached_candidates_for_remainder(
+            self, 
+            remainder: str
+    ) -> tuple[int, ...]:
+        ids = set()
+        ids.update(self.vocab_mgr.tokens_for_prefix(remainder))
+        for i in range(1, len(remainder) + 1):
+            prefix_sub = remainder[:i]
+            token_set = self.vocab_mgr.token_to_id(prefix_sub)
+            if token_set:
+                ids.update(token_set)
+        return tuple(ids)
 
     def _get_candidate_tokens(self) -> Set[int]:
         """Dramatically reduces the search space using the VocabularyTrie."""
@@ -161,13 +176,10 @@ class JSONStateMachine:
                     overlap_len = i
             remainder = target[overlap_len:]
             if remainder:
-                get_tokens_for_pref = self.vocab_mgr.trie.get_tokens_for_prefix
-                candidate_ids.update(get_tokens_for_pref(remainder))
-                for i in range(1, len(remainder) + 1):
-                    prefix_sub = remainder[:i]
-                    if prefix_sub in self.vocab_mgr.token_to_id:
-                        candidate_ids.add(self.vocab_mgr.token_to_id[prefix_sub])
-        return candidate_ids
+                candidate_ids.update(self._cached_candidates_for_remainder(
+                    remainder
+                ))
+                return candidate_ids
 
     def _is_param_complete(self, p_name: str, p_type: str) -> bool:
         """Check if parameter value has been fully generated in current_buffer.
