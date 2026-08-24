@@ -1,5 +1,6 @@
-from typing import Dict
-import json 
+from typing import Dict, DefaultDict, Set
+import json
+from collections import defaultdict
 
 from .trie import VocabularyTrie
 
@@ -10,7 +11,8 @@ class VocabularyManager:
     def __init__(self, vocab_file_path: str) -> None:
         self.vocab_path = vocab_file_path
         self.id_to_token: Dict[int, str] = {}
-        self.token_to_id: Dict[str, int] = {} # REMOVE?? Not sure I'll use
+        # map token string -> set of token ids (raw and cleaned variants)
+        self.token_to_id: DefaultDict[str, Set[int]] = defaultdict(set)
         self.trie = VocabularyTrie()
         self._load_and_build()
 
@@ -27,10 +29,9 @@ class VocabularyManager:
         for raw_token, token_id in raw_vocab.items():
             clean_str = self._clean_token_string(raw_token)
             self.id_to_token[token_id] = clean_str
-            
+
             # Map both raw and cleaned token variants to token IDs
             self.token_to_id[clean_str].add(token_id)
             self.token_to_id[raw_token].add(token_id)
             self.trie.insert(clean_str, token_id)
             self.trie.insert(raw_token, token_id)
-
