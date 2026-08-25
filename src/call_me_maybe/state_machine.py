@@ -215,6 +215,8 @@ class JSONStateMachine:
             token_str = self.vocab_mgr.id_to_token[token_id]
             if self._is_candidate_valid(token_str):
                 allowed_ids.add(token_id)
+                print(f"current token: [{token_id}] {token_str} -", end=" ")
+                print("[VALID]")
         return allowed_ids
 
     def _is_candidate_valid(self, candidate_str: str) -> bool:

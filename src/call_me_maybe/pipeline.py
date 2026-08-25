@@ -66,11 +66,31 @@ class Generation:
                 break
             logits = model.get_logits_from_input_ids(input_ids)
             allowed_ids = state_machine.get_allowed_token_ids()
+            # debug: inspect why allowed_ids might be empty
+            print("DEBUG: buffer:", repr(state_machine.current_buffer))
+            print("DEBUG: state:", state_machine.current_state)
+            print("DEBUG: selected_function:", getattr(state_machine.selected_function, "name", None))
+            print("DEBUG: candidate_allowed_count:", len(allowed_ids))
+            if len(allowed_ids) > 0:
+                # show a small sample of token strings for context
+                sample = list(allowed_ids)[:20]
+                print("DEBUG: allowed sample (id, str):", [(i, vocab_mgr.id_to_token[i]) for i in sample])
+            else:
+                # also show candidates from _get_candidate_tokens() to see why filtering removed them
+                candidates = state_machine._get_candidate_tokens()
+                print("DEBUG: candidate_count:", len(candidates))
+                print("DEBUG: candidate_sample (id, str):", [(i, vocab_mgr.id_to_token[i]) for i in list(candidates)[:20]])
+                # show top-scoring logits for candidate ids so we know model scores (needs logits arr)
+                import numpy as _np
+                logits_arr = _np.array(logits)
+                cand_scores = [(int(i), float(logits_arr[i])) for i in list(candidates)[:50] if i < len(logits_arr)]
+                print("DEBUG: candidate_scores_sample:", cand_scores)
             next_token = select_next_token(logits, allowed_ids)
             state_machine.update(next_token)
             input_ids.append(next_token)
 
         result = state_machine.get_result_dict()
+        print(result)
         return {
                 "prompt": prompt_txt,
                 "name": result.get("name", ""),
