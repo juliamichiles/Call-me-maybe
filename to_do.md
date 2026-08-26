@@ -35,6 +35,8 @@
 ## Structure:
 - [ ] Do we really want to keep call_me_maybe subdir inside src?
 - [ ] Add call_me to ALL files name, bc why not? as in call_me_schema
+- [ ] Main file is too long
+- [ ] Some files have almost nothing in them, maybe merge them? like pipeline + io
 
 ## General:
 - [ ] Ensure all docstrings contains what subject requires and are PEP-whatever
@@ -42,3 +44,4 @@
 - [ ] Maybe state machine is too strict abt input file format, as in:
     - only accepts double quotes for dicts - would single quotes be valid JSON?
     - parameter types have limited names and must be lowercase
+- [ ] Taking SO LONG to run, optimize, do something abt it

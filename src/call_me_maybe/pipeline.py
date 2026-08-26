@@ -60,7 +60,13 @@ class Generation:
         formatted_prompt = self._format_prompt(prompt_txt, functions)
         input_ids: List[int] = model.encode(formatted_prompt).tolist()[0]
         state_machine = JSONStateMachine(prompt_txt, functions, vocab_mgr)
-
+        try:
+            JSONStateMachine_cached_candidates_for_remainder.cache_clear()
+        except Exception:
+            try:
+                state_machine._cached_candidates_for_remainder.cache_clear()
+            except Exception:
+                pass
         for _ in range(max_tokens):
             if state_machine.is_complete():
                 break

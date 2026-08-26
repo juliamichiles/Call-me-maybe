@@ -41,7 +41,14 @@ def main() -> None:
         model = Small_LLM_Model()
         vocab_path = model.get_path_to_vocab_file()
         vocab_mgr = VocabularyManager(vocab_path)
-
+        try:
+            VocabularyManager.tokens_for_prefix.cache_clear()
+        except Exception:
+            try:
+                vocab_mgr.tokens_for_prefix.cache_clear()
+            except Exception:
+                pass
+        
         generator = Generation()
         results = []
 

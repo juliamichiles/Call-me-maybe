@@ -252,7 +252,19 @@ class JSONStateMachine:
         key_prefix = f'"{current_pname}": '
 
         if key_prefix not in self.current_buffer:
+            overlap_len = 0
+            max_check = min(len(self.current_buffer), len(key_prefix))
+            for i in range(1, max_check + 1):
+                if key_prefix.startswith(self.current_buffer[-i:]):
+                    overlap_len = i
+            remainder = key_prefix[overlap_len:]
+            cand_norm = "".join(candidate_str.split())
+            rem_norm = "".join(remainder.split())
+            if rem_norm.startswith(cand_norm) or \
+                    cand_norm.startswith(rem_norm[: len(cand_norm)]):
+                return True
             return self._matches_prefix(combined, key_prefix)
+
 
         sep = ", " if len(self.param_queue) > 1 else "}}"
 
