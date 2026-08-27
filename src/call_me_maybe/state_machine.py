@@ -8,7 +8,7 @@ from .schemas import FunctionDefinition
 from .vocabulary import VocabularyManager
 from .errors import CallMeError
 
-# FIXME: Regex patterns may be too naif, don't handle escaped chars properly
+# FIXME: Regex patterns might be too naif, don't handle escaped chars properly
 # FIXME: I think it should handle more words than number, boolean and string
 
 class CurrentState(Enum):
@@ -211,6 +211,31 @@ class JSONStateMachine:
             return set()
         candidate_ids = self._get_candidate_tokens()
         allowed_ids: Set[int] = set()
+       
+        # if NUM or BOOL, allow any candidate in the precomputed value_tokens
+        if self.current_state in (CurrentState.NUMBER, CurrentState.BOOLEAN):
+            numeric_candidates = candidate_ids & self.value_tokens
+            if numeric_candidates:
+                allowed_ids.update(numeric_candidates)
+                if allowed_ids ==  candidate_ids:
+                    return allowed_ids
+ 
+        # when all params generated, allow structural closing tokens 
+        # (}, }, comma, whitespace)            
+        if not self.param_queue:
+            structural_allowed = set()
+            for tid in candidate_ids:
+                s = self.vocab_mgr.id_to_token[tid]
+                s_stripped = s.strip()
+                if s_stripped in ("}", "}}", "},", ",", ""):
+                    structural_allowed.add(tid)
+                if s in ('"', ' "', '  ', '   '):
+                    structural_allowed.add(tid)
+            if structural_allowed:
+                allowed_ids.update(structural_allowed)
+                if allowed_ids == candidate_ids:
+                    return allowed_ids
+        
         for token_id in candidate_ids:
             token_str = self.vocab_mgr.id_to_token[token_id]
             if self._is_candidate_valid(token_str):
@@ -218,7 +243,7 @@ class JSONStateMachine:
                 print(f"current token: [{token_id}] {token_str} -", end=" ")
                 print("[VALID]")
         return allowed_ids
-
+        
     def _is_candidate_valid(self, candidate_str: str) -> bool:
         """Check if appending candidate_str to current_buffer produces a valid
             prefix.
