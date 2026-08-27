@@ -53,10 +53,11 @@ class JSONStateMachine:
         """Build a coarse candidate set once to avoid scanning the vocabulary
             on every generation step.
         """
+        # matches digits, ., -, spaces, commas, braces
+        numeric_re = re.compile(r'^[\d\.\-\s,}]+$')
+        boolean_re = re.compile(r'^(?:true|false)$', re.IGNORECASE)
         for token_id, token_str in self.vocab_mgr.id_to_token.items():
-            # Matches digits, decimals, minus, boolean parts, spaces, 
-            # commas, and braces
-            if re.match(r'^[\d\.\-\s,\}truefals]+$', token_str, re.IGNORECASE):
+            if numeric_re.match(token_str) or boolean_re.match(token_str):
                 self.value_tokens.add(token_id)
 
     def is_complete(self) -> bool:
@@ -216,33 +217,45 @@ class JSONStateMachine:
         if self.current_state in (CurrentState.NUMBER, CurrentState.BOOLEAN):
             numeric_candidates = candidate_ids & self.value_tokens
             if numeric_candidates:
-                allowed_ids.update(numeric_candidates)
-                if allowed_ids ==  candidate_ids:
-                    return allowed_ids
+                return numeric_candidates
+            # fallback in case no num candidates are found
+            candidate_ids = set(list(candidate_ids)[:2000])
  
         # when all params generated, allow structural closing tokens 
         # (}, }, comma, whitespace)            
         if not self.param_queue:
             structural_allowed = set()
             for tid in candidate_ids:
-                s = self.vocab_mgr.id_to_token[tid]
-                s_stripped = s.strip()
-                if s_stripped in ("}", "}}", "},", ",", ""):
+                s = self.vocab_mgr.id_to_token[tid].strip()
+                if s in ("}", "},", ",", "") or s.startswith("}"):
                     structural_allowed.add(tid)
-                if s in ('"', ' "', '  ', '   '):
+                if s in ('"', ' ', "'"):
                     structural_allowed.add(tid)
             if structural_allowed:
                 allowed_ids.update(structural_allowed)
                 if allowed_ids == candidate_ids:
                     return allowed_ids
         
-        for token_id in candidate_ids:
+        remaining_to_check = list(candidate_ids - allowed_ids)
+        MAX_CHECK = 2000
+        if len(remaining_to_check) > MAX_CHECK:
+            remaining_to_check = remaining_to_check[:MAX_CHECK]
+
+        for token_id in remaining_to_check:
             token_str = self.vocab_mgr.id_to_token[token_id]
             if self._is_candidate_valid(token_str):
                 allowed_ids.add(token_id)
                 print(f"current token: [{token_id}] {token_str} -", end=" ")
                 print("[VALID]")
+        
+        # fallback in case allowed_ids is empty
+        if not allowed_ids and self.current_state \
+                in (CurrentState.NUMBER, CurrentState.BOOLEAN):
+            return candidate_ids & self.value_tokens
+
         return allowed_ids
+
+    
         
     def _is_candidate_valid(self, candidate_str: str) -> bool:
         """Check if appending candidate_str to current_buffer produces a valid
@@ -352,5 +365,9 @@ class JSONStateMachine:
             # FIXME: replace CallMeError with more specific custom error type
             raise CallMeError("Output buffer is not a valid JSON object.")
         except json.JSONDecodeError as e:
-            raise CallMeError(f"Failed to parse generated JSON buffer: {e}")
+            snippet = self.current_buffer[:1000]  # truncate if extremely long
+            raise CallMeError(
+                    f"Failed to parse generated JSON buffer: {e}"
+                    f"\nBuffer snippet: {snippet!r}"
+            )
 
