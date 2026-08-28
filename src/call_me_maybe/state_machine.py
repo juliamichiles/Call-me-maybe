@@ -8,6 +8,13 @@ from .schemas import FunctionDefinition
 from .vocabulary import VocabularyManager
 from .errors import CallMeError
 
+# Compiled module-level regexes to avoid repeated compilation
+NUM_RE = re.compile(r'"(?P<name>[^"\\]*)":\s*(-?\d+(?:\.\d+)?)\s*(,|})')
+BOOL_RE = re.compile(r'"(?P<name>[^"\\]*)":\s*(true|false)\s*(,|})', re.IGNORECASE)
+STRING_RE = re.compile(r'"(?P<name>[^"\\]*)":\s*"([^"\\]*)"\s*(,|})')
+# Fallback small numeric pattern used in incremental checks
+INCR_NUM_RE = re.compile(r"^-?\d*(\.\d*)?$")
+
 # FIXME: Regex patterns might be too naif, don't handle escaped chars properly
 # FIXME: I think it should handle more words than number, boolean and string
 
@@ -48,7 +55,34 @@ class JSONStateMachine:
         self.param_queue: List[str] = []
         self.value_tokens: Set[int] = set()
         self._precompute_value_tokens()
-    
+
+        # per-instance cache: remainder -> tuple(ids) (LRU)
+        # this avoids global/class-level cache and the need to clear it externally
+        self._cached_candidates_for_remainder = lru_cache(maxsize=4096)(
+            lambda rem: tuple(self._compute_candidates_for_remainder(rem))
+        )
+
+        # Precompute a smaller token subset that's reasonable inside JSON strings.
+        # This avoids returning the whole vocabulary for STRING state.
+        self.string_tokens: Set[int] = set()
+        for tid, tstr in self.vocab_mgr.id_to_token.items():
+            # Accept tokens that include quotes, escapes, whitespace, alphabetic content,
+            # or are short punctuation that commonly appears inside strings.
+            s = tstr
+            if (
+                '"' in s or "\\" in s
+                or s.strip() == ""
+                or any(ch.isalpha() for ch in s)
+                or len(s) <= 2 and any(ch in s for ch in ("-", "_", ".", "'"))
+            ):
+                self.string_tokens.add(tid)
+
+        # memoized validator keyed on (short buffer tail, candidate)
+        # we use a small LRU to reduce repeated expensive validation work
+        self._is_candidate_valid_cached = lru_cache(maxsize=8192)(
+            lambda buf_tail, cand: self._is_candidate_valid_uncached(buf_tail, cand)
+        )
+
     def _precompute_value_tokens(self) -> None:
         """Build a coarse candidate set once to avoid scanning the vocabulary
             on every generation step.
@@ -125,25 +159,29 @@ class JSONStateMachine:
         if not self.param_queue:
             if self.current_buffer.rstrip().endswith("}}"):
                 self.current_state = CurrentState.END
-    
-    @lru_cache(maxsize=4096)
-    def _cached_candidates_for_remainder(
-            self, 
-            remainder: str
-    ) -> tuple[int, ...]:
-        ids = set()
+
+    def _compute_candidates_for_remainder(self, remainder: str) -> Set[int]:
+        """Return a set of token ids matching the remainder using Trie and token map.
+
+        This is the heavy operation we cache per-instance.
+        """
+        ids: Set[int] = set()
+        # tokens_for_prefix should ideally be a cached per-instance wrapper in VocabularyManager
         ids.update(self.vocab_mgr.tokens_for_prefix(remainder))
-        for i in range(1, len(remainder) + 1):
+        # check shorter prefix subs (as before) but avoid excessive allocations
+        rl = len(remainder)
+        for i in range(1, rl + 1):
             prefix_sub = remainder[:i]
             token_set = self.vocab_mgr.token_to_id.get(prefix_sub)
             if token_set:
                 ids.update(token_set)
-        return tuple(ids)
+        return ids
 
     def _get_candidate_tokens(self) -> Set[int]:
         """Dramatically reduces the search space using the VocabularyTrie."""
+        # STRING: return a limited set instead of the entire vocabulary
         if self.current_state == CurrentState.STRING:
-            return set(self.vocab_mgr.id_to_token.keys())
+            return set(self.string_tokens)
 
         candidate_ids: Set[int] = set()
 
@@ -167,20 +205,22 @@ class JSONStateMachine:
                 targets.append(', "')
                 targets.append('}}')
 
+        # limit buffer suffix length to reduce repeated large allocations
+        buf_tail = self.current_buffer[-128:]
+
         for target in targets:
             overlap_len = 0
-            max_check = min(len(self.current_buffer), len(target))
-            # Find the longest suffix of the buffer that matches a prefix 
-            # of the target
+            max_check = min(len(buf_tail), len(target))
+            # Find the longest suffix of the buffer that matches a prefix of the target
             for i in range(1, max_check + 1):
-                if target.startswith(self.current_buffer[-i:]):
+                if target.startswith(buf_tail[-i:]):
                     overlap_len = i
             remainder = target[overlap_len:]
             if remainder:
-                candidate_ids.update(self._cached_candidates_for_remainder(
-                    remainder
-                ))
-                return candidate_ids
+                # use the per-instance cached helper
+                candidate_ids.update(self._cached_candidates_for_remainder(remainder))
+
+        return candidate_ids
 
     def _is_param_complete(self, p_name: str, p_type: str) -> bool:
         """Check if parameter value has been fully generated in current_buffer.
@@ -221,8 +261,7 @@ class JSONStateMachine:
             # fallback in case no num candidates are found
             candidate_ids = set(list(candidate_ids)[:2000])
  
-        # when all params generated, allow structural closing tokens 
-        # (}, }, comma, whitespace)            
+        # when all params generated, allow structural closing tokens (}, }, comma, whitespace)
         if not self.param_queue:
             structural_allowed = set()
             for tid in candidate_ids:
@@ -243,32 +282,27 @@ class JSONStateMachine:
 
         for token_id in remaining_to_check:
             token_str = self.vocab_mgr.id_to_token[token_id]
+            # use cached validator which keys on a short buffer tail + candidate
             if self._is_candidate_valid(token_str):
                 allowed_ids.add(token_id)
+                # keep debugging prints optional; remove or gate them later
                 print(f"current token: [{token_id}] {token_str} -", end=" ")
                 print("[VALID]")
         
-        # fallback in case allowed_ids is empty
+        # fallback in case allowed_ids is empty for numeric/boolean
         if not allowed_ids and self.current_state \
                 in (CurrentState.NUMBER, CurrentState.BOOLEAN):
             return candidate_ids & self.value_tokens
 
         return allowed_ids
-
     
-        
-    def _is_candidate_valid(self, candidate_str: str) -> bool:
-        """Check if appending candidate_str to current_buffer produces a valid
-            prefix.
 
-        Args:
-            candidate_str: The candidate token string.
 
-        Returns:
-            True if candidate_str maintains schema validity, False otherwise.
-        """
+    def _is_candidate_valid_uncached(self, buffer_tail: str, candidate_str: str) -> bool:
+        """Uncached heavy validator. buffer_tail is a short suffix of current_buffer."""
+        combined = buffer_tail + candidate_str
 
-        combined = self.current_buffer + candidate_str
+        # If no function selected, only allow header prefixes that match any function
         if self.selected_function is None:
             for fn in self.functions:
                 target = f'{{"name": "{fn.name}", "parameters": {{'
@@ -289,6 +323,7 @@ class JSONStateMachine:
         p_type = fn.parameters[current_pname].type
         key_prefix = f'"{current_pname}": '
 
+        # If key not yet present in buffer, check if candidate helps form the key
         if key_prefix not in self.current_buffer:
             overlap_len = 0
             max_check = min(len(self.current_buffer), len(key_prefix))
@@ -298,25 +333,28 @@ class JSONStateMachine:
             remainder = key_prefix[overlap_len:]
             cand_norm = "".join(candidate_str.split())
             rem_norm = "".join(remainder.split())
-            if rem_norm.startswith(cand_norm) or \
-                    cand_norm.startswith(rem_norm[: len(cand_norm)]):
+            if rem_norm.startswith(cand_norm) or cand_norm.startswith(rem_norm[: len(cand_norm)]):
                 return True
             return self._matches_prefix(combined, key_prefix)
 
-
         sep = ", " if len(self.param_queue) > 1 else "}}"
 
+        # boolean: allow prefixes of true/false
         if p_type == "boolean":
             val_targets = [f"{key_prefix}true{sep}", f"{key_prefix}false{sep}"]
             return any(self._matches_prefix(combined, t) for t in val_targets)
+
+        # number: incremental numeric validation
         if p_type == "number":
             val = combined[combined.rfind(key_prefix) + len(key_prefix) :]
             if not val:
                 return True
             clean_val = val.rstrip(" ,}")
-            if clean_val and not re.match(r"^-?\d*(\.\d*)?$", clean_val):
+            if clean_val and not INCR_NUM_RE.match(clean_val):
                 return False
             return True
+
+        # string: basic checks (imperfect, but fast)
         if p_type == "string":
             val = combined[combined.rfind(key_prefix) + len(key_prefix) :]
             if not val:
@@ -326,6 +364,11 @@ class JSONStateMachine:
             return True
 
         return True
+
+    def _is_candidate_valid(self, candidate_str: str) -> bool:
+        """Cached wrapper for candidate validation. Uses a short buffer tail as cache key."""
+        tail = self.current_buffer[-128:]
+        return self._is_candidate_valid_cached(tail, candidate_str)
 
     @staticmethod
     def _matches_prefix(combined_str: str, target_str: str) -> bool:
@@ -338,16 +381,12 @@ class JSONStateMachine:
         Returns:
             True if combined_str is compatible with target_str.
         """
-        if target_str.startswith(combined_str) or combined_str.startswith(
-                target_str
-                ):
+        if target_str.startswith(combined_str) or combined_str.startswith(target_str):
             return True
 
         norm_combined = "".join(combined_str.split())
         norm_target = "".join(target_str.split())
-        return norm_target.startswith(norm_combined) or norm_combined.startswith(
-            norm_target
-        )
+        return norm_target.startswith(norm_combined) or norm_combined.startswith(norm_target)
 
     def get_result_dict(self) -> Dict[str, Any]:
         """Parse the generated buffer into a valid JSON object dictionary.
@@ -370,4 +409,3 @@ class JSONStateMachine:
                     f"Failed to parse generated JSON buffer: {e}"
                     f"\nBuffer snippet: {snippet!r}"
             )
-
