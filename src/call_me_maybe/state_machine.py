@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from re import DEBUG
 from typing import Any, List, Tuple, Set, Optional
 
 # add local imports
@@ -102,12 +103,10 @@ class JSONStateMachine:
         # Won't this actually be slower? Maybe merge both functions in one
         while self.advance_deterministic():
             pass
-
-        if self.current_state == State.END:
-            return set()
-
+        print("DEBUG:\n--- INSIDE get_allowed_token_ids ---")
         allowed_ids: Set[int] = set()
         if self.current_state == State.SELECT_FUNCTION:
+            print(f"DEBUG: current_state: {self.current_state}")
             for fn_name_f in self.functions:
                 fn_name = str(fn_name_f)
                 if fn_name.startswith(self.fn_name_buffer):
@@ -118,6 +117,7 @@ class JSONStateMachine:
                             ))
         elif self.current_state == State.GEN_STRING:
             # Does this really allow escaped quotes, \n, etc.??
+            print(f"DEBUG: current_state: {self.current_state}")
             for token_id, token_str in self.vocab_mgr.id_to_token.items():
                 # Is this really the most efficient way? Looping through
                 # the whole dict?
@@ -126,7 +126,9 @@ class JSONStateMachine:
                             allowed_ids.add(token_id)
 
         elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
+            print(f"DEBUG: current_state: {self.current_state}")
             # TODO: Check if its worth it to split this in two separete ifs
+            for token_id, token_str in self.vocab_mgr.id_to_token.items():
                 clean = token_str.strip()
                 if clean and (clean.replace('.', '', 1).isdigit() \
                         or clean in [',', '}', 'true', 'false']):
@@ -142,12 +144,17 @@ class JSONStateMachine:
 
         if self.current_state == State.SELECT_FUNCTION:
             self.fn_name_buffer += token_str
-            if self.fn_name_buffer in self.functions:
-                self.selected_function = self.functions[self.fn_name_buffer]
+            # Find matching function
+            matching_fn = next(
+                (f for f in self.functions if f.name == self.fn_name_buffer),
+                None
+            )
+            if matching_fn:
+                self.selected_function = matching_fn
                 self.parameter_queue = list(
-                        self.selected_function.parameter.items()
+                    self.selected_function.parameters.items()
                 )
-                self.current_state = State.EMIT_PARAMS_HEADER
+            self.current_state = State.EMIT_PARAMS_HEADER
 
         elif self.current_state == State.GEN_STRING and '"' in token_str:
             self.current_state = State.EMIT_PARAM_SEP if self.parameter_queue \

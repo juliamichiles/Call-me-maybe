@@ -44,14 +44,20 @@ class Generation:
         formated_prompt = f"User: {prompt_txt}\nOutput:"
         input_ids: List[int] = model.encode(formated_prompt).tolist()[0]
         state_machine = JSONStateMachine(prompt_txt, functions, vocab_mgr)
-
+        
+        print(f"DEBUG: max_tokens: {max_tokens}")
         for _ in range(max_tokens):
             allowed_ids = state_machine.get_allowed_token_ids()
+            print(f"DEBUG: allowed_ids: {allowed_ids}") 
             if state_machine.is_complete():
+                print("DEBUG: state:", state_machine.current_state)
+                print(f"DEBUG: state machine is complete: {state_machine.is_complete()}")
                 break
 
             logits = model.get_logits_from_input_ids(input_ids)
+            print(f"DEBUG: logitos: {logits[0]} -> {logits[-1]}")
             next_token = select_next_token(logits, allowed_ids)
+            print(f"DEBUG: next token: {next_token}")
             # debug: inspect why allowed_ids might be empty
             print("DEBUG: buffer:", repr(state_machine.buffer))
             print("DEBUG: state:", state_machine.current_state)
