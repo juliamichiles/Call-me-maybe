@@ -1,6 +1,5 @@
 from enum import Enum, auto
-from re import S
-from typing import Any, List, Dict, Any, Optional
+from typing import Any, List, Tuple, Set, Optional
 
 # add local imports
 from .vocabulary import VocabularyManager
@@ -101,7 +100,7 @@ class JSONStateMachine:
         """
         # TODO: Does it makes sense to keep the gen calls outside the loops?
         # Won't this actually be slower? Maybe merge both functions in one
-        while.self.advance_deterministic():
+        while self.advance_deterministic():
             pass
 
         if self.current_state == State.END:
@@ -109,7 +108,8 @@ class JSONStateMachine:
 
         allowed_ids: Set[int] = set()
         if self.current_state == State.SELECT_FUNCTION:
-            for fn_name in self.functions:
+            for fn_name_f in self.functions:
+                fn_name = str(fn_name_f)
                 if fn_name.startswith(self.fn_name_buffer):
                     remainder = fn_name[len(self.fn_name_buffer):]
                     if remainder:
@@ -156,6 +156,11 @@ class JSONStateMachine:
             if ',' in token_str or '}' in token_str:
                 self.current_state = State.EMIT_PARAM_SEP if \
                         self.parameter_queue else State.EMIT_END
+
+    def get_current_state(self) -> State:
+        """Compatibility helper used by tests: return current state enum."""
+        return self.current_state
+        # Is this really necessary?
 
     def is_complete(self) -> bool:
           """Check if the state machine has reached the END state.

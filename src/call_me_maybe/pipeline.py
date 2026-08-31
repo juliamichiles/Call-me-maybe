@@ -52,7 +52,13 @@ class Generation:
 
             logits = model.get_logits_from_input_ids(input_ids)
             next_token = select_next_token(logits, allowed_ids)
-
+            # debug: inspect why allowed_ids might be empty
+            print("DEBUG: buffer:", repr(state_machine.buffer))
+            print("DEBUG: state:", state_machine.current_state)
+            print("DEBUG: selected_function:", getattr(
+               state_machine.selected_function, "name", None
+            ))
+            print("DEBUG: candidate_allowed_count:", len(allowed_ids))
             state_machine.update(next_token)
             input_ids.append(next_token)
 
