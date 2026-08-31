@@ -1,6 +1,10 @@
 from typing import Dict, Any, Optional
-from pydantic import BaseModel
 
+from src.call_me_maybe.errors import CallMeError
+try:
+    from pydantic import BaseModel
+except ImportError as e:  # add more errors 
+    raise CallMeError(e) 
 
 class ParameterProperty(BaseModel):
     type: str
