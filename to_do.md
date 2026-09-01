@@ -1,4 +1,5 @@
 ## Next:
+- [ ] Generating invalid JSON, but much faster
 - [ ] (see tests)
 - [ ] write orchestrator that will call state_machine and trie
 

@@ -84,6 +84,8 @@ class JSONStateMachine:
             return True
 
         if self.current_state == State.EMIT_PARAM_SEP:
+            print(f"DEBUG: current_state={State.EMIT_PARAM_SEP}")
+            print("DEBUG: Adding ',' to buffer...")
             self.buffer += ', '
             self.current_state = State.EMIT_PARAM_KEY
             return True
@@ -105,16 +107,20 @@ class JSONStateMachine:
             pass
         print("DEBUG:\n--- INSIDE get_allowed_token_ids ---")
         allowed_ids: Set[int] = set()
+        
         if self.current_state == State.SELECT_FUNCTION:
-            print(f"DEBUG: current_state: {self.current_state}")
-            for fn_name_f in self.functions:
-                fn_name = str(fn_name_f)
+            fn_names = [fn_def.name for fn_def in self.functions]
+            
+            for fn_name in fn_names:
                 if fn_name.startswith(self.fn_name_buffer):
-                    remainder = fn_name[len(self.fn_name_buffer):]
-                    if remainder:
-                        allowed_ids.update(self.vocab_mgr.tokens_for_prefix(
-                            remainder
-                            ))
+                    # What we need to match next
+                    target = fn_name[len(self.fn_name_buffer):]
+                    
+                    # Which vocab tokens are prefixes of target?
+                    for token_id, token_str in self.vocab_mgr.id_to_token.items():
+                        if target.startswith(token_str):
+                            allowed_ids.add(token_id)
+                
         elif self.current_state == State.GEN_STRING:
             # Does this really allow escaped quotes, \n, etc.??
             print(f"DEBUG: current_state: {self.current_state}")
@@ -141,28 +147,46 @@ class JSONStateMachine:
         
         token_str = self.vocab_mgr.id_to_token[token_id]
         self.buffer += token_str
-
+        
         if self.current_state == State.SELECT_FUNCTION:
             self.fn_name_buffer += token_str
-            # Find matching function
+            print(f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}', token_str='{token_str}'")
+                
             matching_fn = next(
                 (f for f in self.functions if f.name == self.fn_name_buffer),
                 None
             )
+            print(f"DEBUG update: matching_fn={matching_fn}")
             if matching_fn:
                 self.selected_function = matching_fn
                 self.parameter_queue = list(
                     self.selected_function.parameters.items()
                 )
-            self.current_state = State.EMIT_PARAMS_HEADER
-
+                self.current_state = State.EMIT_PARAMS_HEADER
+            elif not any(f.name.startswith(self.fn_name_buffer) \
+                    for f in self.functions):
+                raise CallMeError(
+                    f"Invalid function name buffer: '{self.fn_name_buffer}'"
+                )
+        
         elif self.current_state == State.GEN_STRING and '"' in token_str:
             self.current_state = State.EMIT_PARAM_SEP if self.parameter_queue \
                     else State.EMIT_END
-        elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
-            if ',' in token_str or '}' in token_str:
+
+        elif self.current_state == State.GEN_NUMBER:
+            # shouldn't I also check if its a valid number?
+            if token_str.strip() in [',', '}']:
                 self.current_state = State.EMIT_PARAM_SEP if \
                         self.parameter_queue else State.EMIT_END
+
+        elif self.current_state == State.GEN_BOOLEAN:
+            # shouldn't I also check if its a valid boolean?
+            if token_str.strip() in [',', '}']:
+                self.current_state = State.EMIT_PARAM_SEP if \
+                        self.parameter_queue else State.EMIT_END
+        
+        while self.advance_deterministic():
+            pass
 
     def get_current_state(self) -> State:
         """Compatibility helper used by tests: return current state enum."""

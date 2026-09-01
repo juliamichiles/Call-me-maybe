@@ -68,6 +68,7 @@ class Generation:
             state_machine.update(next_token)
             input_ids.append(next_token)
 
+            print(f"DEBUG: sm_buffer={state_machine.buffer}")
         try:
             parsed_output = json.loads(state_machine.buffer)
             return {
