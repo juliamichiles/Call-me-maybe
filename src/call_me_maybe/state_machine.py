@@ -54,6 +54,7 @@ class JSONStateMachine:
         self.current_state = State.EMIT_START
         self.selected_function: Optional[FunctionDefinition] = None
         self.parameter_queue: List[Tuple[str, ParameterProperty]] = []
+        self._param_has_content = False
         self.fn_name_buffer = ""
         self.buffer = ""
     
@@ -74,6 +75,7 @@ class JSONStateMachine:
        
         if self.current_state == State.EMIT_PARAM_KEY:
             p_name, p_prop = self.parameter_queue.pop(0)
+            self._param_has_content = False
             if p_prop.type == "string":
                 self.buffer += f'"{p_name}": "'
                 self.current_state = State.GEN_STRING
@@ -131,15 +133,29 @@ class JSONStateMachine:
                         any(c in token_str for c in ['\n', '\r']):
                             allowed_ids.add(token_id)
 
-        elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
+        elif self.current_state == State.GEN_NUMBER:
             print(f"DEBUG: current_state: {self.current_state}")
-            # TODO: Check if its worth it to split this in two separete ifs
             for token_id, token_str in self.vocab_mgr.id_to_token.items():
                 clean = token_str.strip()
-                if clean and (clean.replace('.', '', 1).isdigit() \
-                        or clean in [',', '}', 'true', 'false']):
+                if not clean:
+                    continue
+                # numeric token (digits or decimal)
+                if clean.replace('.', '', 1).isdigit():
                     allowed_ids.add(token_id)
-        
+                # allow comma/brace only if we've already emitted digits
+                elif clean in [',', '}'] and self._param_has_content:
+                    allowed_ids.add(token_id)
+        elif self.current_state == State.GEN_BOOLEAN:
+            print(f"DEBUG: current_state: {self.current_state}")
+            for token_id, token_str in self.vocab_mgr.id_to_token.items():
+                clean = token_str.strip()
+                if not clean:
+                    continue
+                if clean in ['true', 'false']:
+                    allowed_ids.add(token_id)
+                elif clean in [',', '}'] and self._param_has_content:
+                    allowed_ids.add(token_id)
+
         return allowed_ids
 
     def update(self, token_id: int) -> None:
@@ -173,17 +189,13 @@ class JSONStateMachine:
             self.current_state = State.EMIT_PARAM_SEP if self.parameter_queue \
                     else State.EMIT_END
 
-        elif self.current_state == State.GEN_NUMBER:
-            # shouldn't I also check if its a valid number?
-            if token_str.strip() in [',', '}']:
-                self.current_state = State.EMIT_PARAM_SEP if \
-                        self.parameter_queue else State.EMIT_END
+        elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
+            if not (',' in token_str or '}' in token_str):
+                self._param_has_content = True
 
-        elif self.current_state == State.GEN_BOOLEAN:
-            # shouldn't I also check if its a valid boolean?
-            if token_str.strip() in [',', '}']:
+            if ',' in token_str or '}' in token_str:
                 self.current_state = State.EMIT_PARAM_SEP if \
-                        self.parameter_queue else State.EMIT_END
+                        self.parameter_queue else State.EMIT_END       
         
         while self.advance_deterministic():
             pass

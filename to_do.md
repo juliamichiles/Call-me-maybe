@@ -1,4 +1,6 @@
 ## Next:
+- [ ] Implement constraint decoding for parameter values
+- [ ] Now hallucinates numbers endlessly...
 - [ ] Generating invalid JSON, but much faster
 - [ ] (see tests)
 - [ ] write orchestrator that will call state_machine and trie
