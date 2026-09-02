@@ -6,7 +6,7 @@ try:
 except ImportError as e:  # add more errors 
     raise CallMeError(e) 
 # FIXME: Rename type to p_type
-
+# FIXME: Remove unused models
 
 class ParameterProperty(BaseModel):
     type: str

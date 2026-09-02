@@ -49,14 +49,13 @@ def main() -> None:
             except Exception:
                 pass
         
-        generator = Generation()
+        generator = Generation(functions) # acho, antes n recebia nada
         results = []
 
         for prompt_obj in prompts:
             call_result = generator.gen_function_call(
                     model=model,
                     prompt_txt=prompt_obj.prompt,
-                    functions=functions,
                     vocab_mgr=vocab_mgr
             )
             results.append(call_result)

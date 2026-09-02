@@ -121,4 +121,4 @@ VocabularyTrie efficiently retrieves token IDs given a prefix in O(L) time (L be
                                            │
                                            ▼
                                     Python dict
-
+    ### add UML State Machine

@@ -36,18 +36,19 @@ class JSONStateMachine:
       """
     def __init__(
             self,
-            prompt_txt: str,
+            # prompt_txt: str,
             functions: List[FunctionDefinition],
             vocab_mgr: VocabularyManager
     )-> None:
         """Initialize the state machine with prompt, functions, and vocabulary.
 
           Args:
-              prompt_txt: The natural language user prompt.
+              # prompt_txt: The natural language user prompt.
               funcs: List of available function definitions.
               vocab_mgr: VocabularyManager instance for token lookups.
           """
-        self.prompt_txt = prompt_txt
+        # self.prompt_txt = prompt_txt
+        # FIXME: actually remove prompt_txt or uncomment if we end up using it
         self.functions = functions
         self.vocab_mgr = vocab_mgr
 

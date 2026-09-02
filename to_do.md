@@ -1,9 +1,13 @@
 ## Next:
-- [ ] Implement constraint decoding for parameter values
+- [ ] Stopped hallucinating numbers, but its still generating malformed JSON
+- [ ] Not handling getting parameters from LLM well
 - [ ] Now hallucinates numbers endlessly...
 - [ ] Generating invalid JSON, but much faster
 - [ ] (see tests)
 - [ ] write orchestrator that will call state_machine and trie
+
+## Questions:
+- What does the LLM even do with the prompt after encoding it? How is it used?
 
 ## Environment and Makefile:
 - [ ] Ensure we actually used all dependencies on uv
