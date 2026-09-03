@@ -40,7 +40,7 @@ class Generation:
                 " keys: \"name\" and \"parameters\".\n\n"
                 "IMPORTANT: If the user's prompt contains numbers or quoted"
                 " strings, you MUST copy those exact values into the parameters"
-                "Do not invent numbers.\n"
+                " Do not invent numbers.\n"
                 "If a string contains quotes, escape them"
                 " (e.g. \\\"hello\\\").\n\n"
                 #"Examples (Input -> Assistant JSON):\n"
@@ -70,7 +70,7 @@ class Generation:
         
         full_prompt = (
                 f"{system_guide}{functions_str}\n\n"
-                f"User Request: {user_input}\nAssistant Response:\n{{"
+                f"User Request: {user_input}\nAssistant Response:\n"
         )
         return full_prompt
 
@@ -92,7 +92,7 @@ class Generation:
         print(f"DEBUG: max_tokens: {max_tokens}")
         for _ in range(max_tokens):
             allowed_ids = state_machine.get_allowed_token_ids()
-            print(f"DEBUG: allowed_ids: {allowed_ids}") 
+            print(f"DEBUG: allowed_ids count: {len(allowed_ids)}") 
             if state_machine.is_complete():
                 print("DEBUG: state:", state_machine.current_state)
                 print(f"DEBUG: state machine is complete: {state_machine.is_complete()}")

@@ -1,7 +1,6 @@
 from enum import Enum, auto
-from re import DEBUG
 from typing import Any, List, Tuple, Set, Optional
-
+from collections import deque
 # add local imports
 from .vocabulary import VocabularyManager
 from .schemas import FunctionDefinition, ParameterProperty
@@ -54,7 +53,7 @@ class JSONStateMachine:
 
         self.current_state = State.EMIT_START
         self.selected_function: Optional[FunctionDefinition] = None
-        self.parameter_queue: List[Tuple[str, ParameterProperty]] = []
+        self.parameter_queue: deque[Tuple[str, ParameterProperty]] = deque()
         self._param_has_content = False
         self.fn_name_buffer = ""
         self.param_value_buffer = ""
@@ -83,7 +82,7 @@ class JSONStateMachine:
             return True
        
         if self.current_state == State.EMIT_PARAM_KEY:
-            p_name, p_prop = self.parameter_queue.pop(0)
+            p_name, p_prop = self.parameter_queue.popleft()
             self._param_has_content = False
             self.param_value_buffer = ""
             if p_prop.type == "string":
@@ -137,12 +136,14 @@ class JSONStateMachine:
             # Does this really allow escaped quotes, \n, etc.??
             print(f"DEBUG: current_state: {self.current_state}")
             for token_id, token_str in self.vocab_mgr.id_to_token.items():
-                # Is this really the most efficient way? Looping through
-                # the whole dict?
-                if '"' in token_str or not \
-                        any(c in token_str for c in ['\n', '\r']):
-                            allowed_ids.add(token_id)
-
+                clean = token_str.strip()
+                if not clean:
+                    continue
+                if token_str == '"':
+                    allowed_ids.add(token_id)
+                elif not any(c in token_str for c in ['"', '\n', '\r', '\x00']):
+                    allowed_ids.add(token_id)
+        
         elif self.current_state == State.GEN_NUMBER:
             print(f"DEBUG: current_state: {self.current_state}")
             for token_id, token_str in self.vocab_mgr.id_to_token.items():
@@ -155,6 +156,7 @@ class JSONStateMachine:
                 # allow comma/brace only if we've already emitted digits
                 elif clean in [',', '}'] and self._param_has_content:
                     allowed_ids.add(token_id)
+        
         elif self.current_state == State.GEN_BOOLEAN:
             print(f"DEBUG: current_state: {self.current_state}")
             for token_id, token_str in self.vocab_mgr.id_to_token.items():
@@ -196,8 +198,9 @@ class JSONStateMachine:
             )
             print(f"DEBUG update: matching_fn={matching_fn}")
             if matching_fn:
+                self.buffer += '"'
                 self.selected_function = matching_fn
-                self.parameter_queue = list(
+                self.parameter_queue = deque(
                     self.selected_function.parameters.items()
                 )
                 self.current_state = State.EMIT_PARAMS_HEADER
@@ -209,6 +212,7 @@ class JSONStateMachine:
 
         elif self.current_state == State.GEN_STRING and '"' in token_str:
             self._commit_param_value()
+            self.buffer += '"'
             self.current_state = State.EMIT_PARAM_SEP \
                 if self.parameter_queue else State.EMIT_END
 
