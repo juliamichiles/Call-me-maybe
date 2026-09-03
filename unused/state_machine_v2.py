@@ -57,16 +57,8 @@ class JSONStateMachine:
         self.parameter_queue: List[Tuple[str, ParameterProperty]] = []
         self._param_has_content = False
         self.fn_name_buffer = ""
-        self.param_value_buffer = ""
         self.buffer = ""
     
-    def _commit_param_value(self) -> None:
-        """Appends accumulated parameter value to main buffer and resets local
-                buffer.
-        """
-        self.buffer += self.param_value_buffer
-        self.param_value_buffer = ""
-
     def advance_deterministic(self) -> bool:
         """Bypasses LLM by appending mandatory syntax tokens directly. 
                 Returns True if state changed or False otherwise.
@@ -85,7 +77,6 @@ class JSONStateMachine:
         if self.current_state == State.EMIT_PARAM_KEY:
             p_name, p_prop = self.parameter_queue.pop(0)
             self._param_has_content = False
-            self.param_value_buffer = ""
             if p_prop.type == "string":
                 self.buffer += f'"{p_name}": "'
                 self.current_state = State.GEN_STRING
@@ -167,29 +158,17 @@ class JSONStateMachine:
                     allowed_ids.add(token_id)
 
         return allowed_ids
+
     def update(self, token_id: int) -> None:
-        """Appends chosen token to appropriate buffer and commits on completion.
-        """
+        """Appends chosen token to buffer and checks for state completion."""
+        
         token_str = self.vocab_mgr.id_to_token[token_id]
-
-        is_param_state = self.current_state in (
-            State.GEN_STRING,
-            State.GEN_NUMBER,
-            State.GEN_BOOLEAN
-        )
-
-        if is_param_state:
-            self.param_value_buffer += token_str
-        else:
-            self.buffer += token_str
-
+        self.buffer += token_str
+        
         if self.current_state == State.SELECT_FUNCTION:
             self.fn_name_buffer += token_str
-            print(
-                f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}',"
-                f" token_str='{token_str}'"
-            )
-
+            print(f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}', token_str='{token_str}'")
+                
             matching_fn = next(
                 (f for f in self.functions if f.name == self.fn_name_buffer),
                 None
@@ -206,29 +185,22 @@ class JSONStateMachine:
                 raise CallMeError(
                     f"Invalid function name buffer: '{self.fn_name_buffer}'"
                 )
-
+        
         elif self.current_state == State.GEN_STRING and '"' in token_str:
-            self._commit_param_value()
-            self.current_state = State.EMIT_PARAM_SEP \
-                if self.parameter_queue else State.EMIT_END
+            self.current_state = State.EMIT_PARAM_SEP if self.parameter_queue \
+                    else State.EMIT_END
 
         elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
             if not (',' in token_str or '}' in token_str):
                 self._param_has_content = True
 
             if ',' in token_str or '}' in token_str:
-                # Strip trailing delimiter token before commit
-                if self.param_value_buffer and self.param_value_buffer[-1] \
-                        in (',', '}'):
-                    self.param_value_buffer = self.param_value_buffer[:-1]
-
-                self._commit_param_value()
                 self.current_state = State.EMIT_PARAM_SEP if \
-                    self.parameter_queue else State.EMIT_END
-
+                        self.parameter_queue else State.EMIT_END       
+        
         while self.advance_deterministic():
             pass
-   
+
     def get_current_state(self) -> State:
         """Compatibility helper used by tests: return current state enum."""
         return self.current_state
@@ -241,3 +213,5 @@ class JSONStateMachine:
               True if state machine is in END state, False otherwise.
           """
           return self.current_state == State.END
+
+    
