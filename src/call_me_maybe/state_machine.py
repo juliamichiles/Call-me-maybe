@@ -1,10 +1,13 @@
 from enum import Enum, auto
-from typing import Any, List, Tuple, Set, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Set, Optional
 from collections import deque
 # add local imports
 from .vocabulary import VocabularyManager
 from .schemas import FunctionDefinition, ParameterProperty
 from .errors import CallMeError
+
+if TYPE_CHECKING:
+    from llm_sdk import Small_LLM_Model
 
 
 class State(Enum):
@@ -35,8 +38,9 @@ class JSONStateMachine:
       """
     def __init__(
             self,
-            # prompt_txt: str,
+            prompt_txt: str,
             functions: List[FunctionDefinition],
+            model: "Small_LLM_Model",
             vocab_mgr: VocabularyManager
     )-> None:
         """Initialize the state machine with prompt, functions, and vocabulary.
@@ -46,11 +50,11 @@ class JSONStateMachine:
               funcs: List of available function definitions.
               vocab_mgr: VocabularyManager instance for token lookups.
           """
-        # self.prompt_txt = prompt_txt
-        # FIXME: actually remove prompt_txt or uncomment if we end up using it
+        self.prompt_txt = prompt_txt
         self.functions = functions
         self.vocab_mgr = vocab_mgr
-
+        self.model = model 
+        self.deterministic_token_ids: List[int] = []
         self.current_state = State.EMIT_START
         self.selected_function: Optional[FunctionDefinition] = None
         self.parameter_queue: deque[Tuple[str, ParameterProperty]] = deque()
@@ -58,6 +62,9 @@ class JSONStateMachine:
         self.fn_name_buffer = ""
         self.param_value_buffer = ""
         self.buffer = ""
+
+    def _encoded(self, text: str) -> List[int]:
+       return self.model.encode(text).tolist()[0]
     
     def _commit_param_value(self) -> None:
         """Appends accumulated parameter value to main buffer and resets local
@@ -66,56 +73,88 @@ class JSONStateMachine:
         self.buffer += self.param_value_buffer
         self.param_value_buffer = ""
 
-    def advance_deterministic(self) -> bool:
-        """Bypasses LLM by appending mandatory syntax tokens directly. 
-                Returns True if state changed or False otherwise.
+    def advance_deterministic(self) -> Optional[List[int]]:
+        """Bypasses LLM by appending mandatory syntax tokens directly.
+                Returns the encoded token IDs of text appended,
+                or None if no state change.
         """
+        appended_text = ""
+
         if self.current_state == State.EMIT_START:
-            self.buffer += '{"name": "'
+            appended_text = '{"name": "'
+            self.buffer += appended_text
             self.current_state = State.SELECT_FUNCTION
-            return True
-        
+            return self._encoded(appended_text)
+
         if self.current_state == State.EMIT_PARAMS_HEADER:
-            self.buffer += ', "parameters": {'
+            appended_text = '", "parameters": {'
+            self.buffer += appended_text
             self.current_state = State.EMIT_PARAM_KEY if self.parameter_queue \
-                    else State.EMIT_END
-            return True
-       
+                    else State.END
+            return self._encoded(appended_text)
+
         if self.current_state == State.EMIT_PARAM_KEY:
             p_name, p_prop = self.parameter_queue.popleft()
             self._param_has_content = False
             self.param_value_buffer = ""
             if p_prop.type == "string":
-                self.buffer += f'"{p_name}": "'
+                appended_text = f'"{p_name}": "'
+                self.buffer += appended_text
                 self.current_state = State.GEN_STRING
             else:
-                self.buffer += f'"{p_name}": '
-                self.current_state = State.GEN_NUMBER if \
-                        p_prop.type == "number" else State.GEN_BOOLEAN
-            return True
-
+                appended_text = f'"{p_name}": '
+                self.buffer += appended_text
+                self.current_state = State.GEN_NUMBER \
+                        if p_prop.type == "number" else State.GEN_BOOLEAN
+            return self._encoded(appended_text)
         if self.current_state == State.EMIT_PARAM_SEP:
-            print(f"DEBUG: current_state={State.EMIT_PARAM_SEP}")
-            print("DEBUG: Adding ',' to buffer...")
-            self.buffer += ', '
+            # if not self.buffer.endswith(", ")
+            appended_text = ', '
+            self.buffer += appended_text
             self.current_state = State.EMIT_PARAM_KEY
-            return True
+            return self._encoded(appended_text)
 
         if self.current_state == State.EMIT_END:
-            self.buffer += '}}'
+            # maybe add an if here to avoid adding them twice
+            appended_text = '}}'
+            self.buffer += appended_text
             self.current_state = State.END
-            return True
+            return self._encoded(appended_text)
+        # NOW we intentionally DO NOT deterministically append
+        # separators and let the LLM will generate closing
+        return None
+       
+    def _get_generation_context(self) -> Dict[str, Any]:
+            # UNUSED SO FaR!!!
+        """Build context dict for the current generation state.
+            Returns info about:
+                - The original prompt
+                - What's been generated so far
+                - What was forced vs. LLM-generated
+                - Current parameter being filled
+        """
+        return {
+                "prompt_txt": self.prompt_txt,
+                "current_buffer": self.buffer,
+                "param_values_so_far:": self.param_value_buffer,
+                "deterministic_token_ids": self.deterministic_token_ids,
+                "current_state": self.current_state,
+                "selected_function": self.selected_function.name \
+                        if self.selected_function else None
+        }
 
-        return False
-    
     def get_allowed_token_ids(self) -> Set[int]:
         """Resolves all deterministic transitions and returns valid token IDs for 
             LLM states.
         """
         # TODO: Does it makes sense to keep the gen calls outside the loops?
         # Won't this actually be slower? Maybe merge both functions in one
-        while self.advance_deterministic():
-            pass
+        while True:
+            det_tokens = self.advance_deterministic()
+            if det_tokens is None:
+                break
+            self.deterministic_token_ids.extend(det_tokens)
+
         print("DEBUG:\n--- INSIDE get_allowed_token_ids ---")
         allowed_ids: Set[int] = set()
         
@@ -169,6 +208,7 @@ class JSONStateMachine:
                     allowed_ids.add(token_id)
 
         return allowed_ids
+    
     def update(self, token_id: int) -> None:
         """Appends chosen token to appropriate buffer and commits on completion.
         """
@@ -198,7 +238,6 @@ class JSONStateMachine:
             )
             print(f"DEBUG update: matching_fn={matching_fn}")
             if matching_fn:
-                self.buffer += '"'
                 self.selected_function = matching_fn
                 self.parameter_queue = deque(
                     self.selected_function.parameters.items()
@@ -212,7 +251,6 @@ class JSONStateMachine:
 
         elif self.current_state == State.GEN_STRING and '"' in token_str:
             self._commit_param_value()
-            self.buffer += '"'
             self.current_state = State.EMIT_PARAM_SEP \
                 if self.parameter_queue else State.EMIT_END
 
@@ -220,18 +258,34 @@ class JSONStateMachine:
             if not (',' in token_str or '}' in token_str):
                 self._param_has_content = True
 
-            if ',' in token_str or '}' in token_str:
-                # Strip trailing delimiter token before commit
-                if self.param_value_buffer and self.param_value_buffer[-1] \
-                        in (',', '}'):
-                    self.param_value_buffer = self.param_value_buffer[:-1]
-
-                self._commit_param_value()
-                self.current_state = State.EMIT_PARAM_SEP if \
+        if ',' in token_str or '}' in token_str:
+            # Strip trailing delimiter token before commit
+            if self.param_value_buffer and \
+                    self.param_value_buffer[-1] in (',', '}'):
+                self.param_value_buffer = self.param_value_buffer[:-1]
+                
+            self._commit_param_value()
+            self._param_has_content = False  # Reset for next parameter
+            self.current_state = State.EMIT_PARAM_SEP if \
                     self.parameter_queue else State.EMIT_END
+        # elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
+        #     if not (',' in token_str or '}' in token_str):
+        #         self._param_has_content = True
 
-        while self.advance_deterministic():
-            pass
+        #     if ',' in token_str or '}' in token_str:
+        #         # Strip trailing delimiter token before commit
+        #         if self.param_value_buffer and self.param_value_buffer[-1] \
+        #                 in (',', '}'):
+        #             self._commit_param_value()
+        #             self.current_state = State.EMIT_PARAM_SEP if \
+        #                     self.parameter_queue else State.EMIT_END
+
+        while True:
+            det_tokens = self.advance_deterministic()
+            if det_tokens is None:
+                break
+            self.deterministic_token_ids.extend(det_tokens) 
+
    
     def get_current_state(self) -> State:
         """Compatibility helper used by tests: return current state enum."""
