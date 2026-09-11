@@ -1,3 +1,10 @@
+## Idea:
+- keep advance_deterministic to force some of the structural JSON chars
+- add a similar logic as the one used to select function to select param values:
+    - parse user input and use LLM to select some "candidate" parameters from the 
+    prompt, later use the logic described above to select the precomputed candidate
+    - see possible_solution.md
+
 ## Next:
 - [ ] Stopped hallucinating numbers, but its still generating malformed JSON
 - [ ] Not handling getting parameters from LLM well
