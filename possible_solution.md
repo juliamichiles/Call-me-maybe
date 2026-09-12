@@ -9,6 +9,8 @@ https://chatgpt.com/s/t_6aa5532dc4c88191ac925f587135a59e
 12/09/26 - pipeline after modifying state machine:
 https://chatgpt.com/s/t_6aa5532dc4c88191ac925f587135a59e
 
+12/09/26 - other implementation overview:
+https://chatgpt.com/s/t_6aa55c5366e88191a7f8e29040d37480
 
 Yes — **the architecture you're proposing is compatible with the subject**, with one important distinction:
 
