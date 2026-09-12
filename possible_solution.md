@@ -2,6 +2,13 @@ Possible solution:
 
 https://chatgpt.com/s/t_6a9abe6117248191906e538110057984
 
+----
+12/09/26 - new possible state machine feedback:
+https://chatgpt.com/s/t_6aa5532dc4c88191ac925f587135a59e
+
+12/09/26 - pipeline after modifying state machine:
+https://chatgpt.com/s/t_6aa5532dc4c88191ac925f587135a59e
+
 
 Yes — **the architecture you're proposing is compatible with the subject**, with one important distinction:
 
