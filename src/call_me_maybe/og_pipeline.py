@@ -38,25 +38,24 @@ class Generation:
                 "You must answer the user's request by calling exactly one"
                 " function from the list below. Output must be valid JSON with"
                 " keys: \"name\" and \"parameters\".\n\n"
-                "IMPORTANT: For each function parameter, infer the value from " 
-                "the user's request. Use values explicitly provided by the user "
-                "whenever possible. Do not invent values that are not supported"
-                "by the user's request. Do not invent numbers.\n"
+                "IMPORTANT: If the user's prompt contains numbers or quoted"
+                " strings, you MUST copy those exact values into the parameters"
+                " Do not invent numbers.\n"
                 "If a string contains quotes, escape them"
                 " (e.g. \\\"hello\\\").\n\n"
-                "Examples (Input -> Assistant JSON):\n"
-                "User Request: What is the square root of 16?\n"
-                "Assistant Response: "
-                "{\"name\": \"fn_get_square_root\", \"parameters\": "
-                "{\"a\": 16}}\n\n"
-                "User Request: What is the sum of 2 and 3?\n"
-                "Assistant Response: "
-                "{\"name\": \"fn_add_numbers\", \"parameters\": "
-                "{\"a\": 2, \"b\": 3}}\n\n"
-                "User Request: Greet \"John\" please\n"
-                "Assistant Response: " 
-                "{\"name\": \"fn_greet\", \"parameters\": {\"name\":"
-                " \"John\"}}\n\n"
+                #"Examples (Input -> Assistant JSON):\n"
+                #"User Request: What is the square root of 16?\n"
+                #"Assistant Response: "
+                #"{\"name\": \"fn_get_square_root\", \"parameters\": "
+                #"{\"a\": 16}}\n\n"
+                #"User Request: What is the sum of 2 and 3?\n"
+                #"Assistant Response: "
+                #"{\"name\": \"fn_add_numbers\", \"parameters\": "
+                #"{\"a\": 2, \"b\": 3}}\n\n"
+                #"User Request: Greet \"John\" please\n"
+                #"Assistant Response: " 
+                #"{\"name\": \"fn_greet\", \"parameters\": {\"name\":"
+                #" \"John\"}}\n\n"
                 "Available functions:\n"
         )
         function_lines = []
@@ -88,23 +87,12 @@ class Generation:
 
         formated_prompt = self._format_prompt(prompt_txt)
         input_ids: List[int] = model.encode(formated_prompt).tolist()[0]
-        state_machine = JSONStateMachine(
-                prompt_txt,
-                self.functions,
-                model,
-                vocab_mgr,
-        ) 
-        print(f"DEBUG: max_tokens: {max_tokens}")
+        state_machine = JSONStateMachine(self.functions, vocab_mgr)
         
+        print(f"DEBUG: max_tokens: {max_tokens}")
         for _ in range(max_tokens):
-            
             allowed_ids = state_machine.get_allowed_token_ids()
             print(f"DEBUG: allowed_ids count: {len(allowed_ids)}") 
-            
-            if state_machine.deterministic_token_ids:
-                input_ids.extend(state_machine.deterministic_token_ids)
-                state_machine.deterministic_token_ids.clear()
-
             if state_machine.is_complete():
                 print("DEBUG: state:", state_machine.current_state)
                 print(f"DEBUG: state machine is complete: {state_machine.is_complete()}")

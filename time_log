@@ -20,4 +20,5 @@
 08.09.26 - 4h10 - debugging + minor changes to sm 
 10.09.26 - 2h15 - debugging
 11.09.26 - 3h35 - debugging
-13.09.26 - 2h15 - researching possible solutions
+12.09.26 - 2h15 - researching possible solutions
+13.09.26 - 3h00 - redid state_machine + minor fixes to pipeline and vocab_mgr

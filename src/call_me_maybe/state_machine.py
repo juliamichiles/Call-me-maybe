@@ -1,17 +1,19 @@
 from enum import Enum, auto
-from typing import Any, List, Tuple, Set, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Set, Optional
 from collections import deque
 # add local imports
 from .vocabulary import VocabularyManager
 from .schemas import FunctionDefinition, ParameterProperty
 from .errors import CallMeError
 
+if TYPE_CHECKING:
+    from llm_sdk import Small_LLM_Model
+
 
 class State(Enum):
     """ Enumerations for each possible generation state to further determine if
             LLM should be called or bypassed in a given state.
     """
-    # FIXME: I think each "function call" should be wrapped in []
     # --- FORCED / DETERMINISTIC STATES (LLM Bypassed) ---
     EMIT_START = auto()          # Emits '{"name": "'
     EMIT_PARAMS_HEADER = auto()  # Emits '", "parameters": {'
@@ -20,10 +22,11 @@ class State(Enum):
     EMIT_END = auto()            # Emits '}}'
 
     # --- LLM-DRIVEN STATES (LLM Called) ---
-    SELECT_FUNCTION = auto()     # LLM picks function name (e.g., "fn_add_numbers")
-    GEN_STRING = auto()          # LLM generates string argument content
-    GEN_NUMBER = auto()          # LLM generates numeric argument digits/decimal
-    GEN_BOOLEAN = auto()         # LLM selects 'true' or 'false'
+    SELECT_FUNCTION = auto()        # LLM picks function name (e.g., "fn_add_numbers")
+    SELECT_PARAMETER_VALUE = auto() # LLM extracts/selects parameter value from prompt
+    GEN_STRING = auto()             # LLM generates string argument content (constrained)
+    GEN_NUMBER = auto()             # LLM generates numeric argument digits/decimal (constrained)
+    GEN_BOOLEAN = auto()            # LLM selects 'true' or 'false' (constrained)
 
     # --- TERMINAL STATE ---
     END = auto()                 # Generation finished
@@ -35,30 +38,37 @@ class JSONStateMachine:
       """
     def __init__(
             self,
-            # prompt_txt: str,
+            prompt_txt: str,
             functions: List[FunctionDefinition],
+            model: "Small_LLM_Model",
             vocab_mgr: VocabularyManager
     )-> None:
         """Initialize the state machine with prompt, functions, and vocabulary.
 
           Args:
-              # prompt_txt: The natural language user prompt.
-              funcs: List of available function definitions.
+              prompt_txt: The natural language user prompt.
+              functions: List of available function definitions.
+              model: The LLM model instance.
               vocab_mgr: VocabularyManager instance for token lookups.
           """
-        # self.prompt_txt = prompt_txt
-        # FIXME: actually remove prompt_txt or uncomment if we end up using it
+        self.prompt_txt = prompt_txt
         self.functions = functions
         self.vocab_mgr = vocab_mgr
-
+        self.model = model 
+        self.deterministic_token_ids: List[int] = []
         self.current_state = State.EMIT_START
         self.selected_function: Optional[FunctionDefinition] = None
         self.parameter_queue: deque[Tuple[str, ParameterProperty]] = deque()
         self._param_has_content = False
         self.fn_name_buffer = ""
         self.param_value_buffer = ""
+        self.current_param_name = ""  # Track which parameter we're filling
+        self.current_param_type = ""  # Track the type of current parameter
         self.buffer = ""
-    
+
+    def _encoded(self, text: str) -> List[int]:
+       return self.model.encode(text).tolist()[0]
+     
     def _commit_param_value(self) -> None:
         """Appends accumulated parameter value to main buffer and resets local
                 buffer.
@@ -66,182 +76,300 @@ class JSONStateMachine:
         self.buffer += self.param_value_buffer
         self.param_value_buffer = ""
 
-    def advance_deterministic(self) -> bool:
-        """Bypasses LLM by appending mandatory syntax tokens directly. 
-                Returns True if state changed or False otherwise.
+    def advance_deterministic(self) -> Optional[List[int]]:
+        """Bypasses LLM by appending mandatory syntax tokens directly.
+                Returns the encoded token IDs of text appended,
+                or None if no state change.
         """
+        appended_text = ""
+
         if self.current_state == State.EMIT_START:
-            self.buffer += '{"name": "'
+            appended_text = '{"name": "'
+            self.buffer += appended_text
             self.current_state = State.SELECT_FUNCTION
-            return True
-        
+            return self._encoded(appended_text)
+
         if self.current_state == State.EMIT_PARAMS_HEADER:
-            self.buffer += ', "parameters": {'
+            appended_text = '", "parameters": {'
+            self.buffer += appended_text
             self.current_state = State.EMIT_PARAM_KEY if self.parameter_queue \
-                    else State.EMIT_END
-            return True
-       
+                    else State.END
+            return self._encoded(appended_text)
+
         if self.current_state == State.EMIT_PARAM_KEY:
             p_name, p_prop = self.parameter_queue.popleft()
             self._param_has_content = False
             self.param_value_buffer = ""
-            if p_prop.type == "string":
-                self.buffer += f'"{p_name}": "'
-                self.current_state = State.GEN_STRING
-            else:
-                self.buffer += f'"{p_name}": '
-                self.current_state = State.GEN_NUMBER if \
-                        p_prop.type == "number" else State.GEN_BOOLEAN
-            return True
-
+            self.current_param_name = p_name
+            self.current_param_type = p_prop.type
+            
+            appended_text = f'"{p_name}": '
+            self.buffer += appended_text
+            
+            # All parameter values now go through SELECT_PARAMETER_VALUE
+            # regardless of type. The type constraint is applied in 
+            # get_allowed_token_ids()
+            self.current_state = State.SELECT_PARAMETER_VALUE
+            return self._encoded(appended_text)
+            
         if self.current_state == State.EMIT_PARAM_SEP:
-            print(f"DEBUG: current_state={State.EMIT_PARAM_SEP}")
-            print("DEBUG: Adding ',' to buffer...")
-            self.buffer += ', '
+            appended_text = ', '
+            self.buffer += appended_text
             self.current_state = State.EMIT_PARAM_KEY
-            return True
+            return self._encoded(appended_text)
 
         if self.current_state == State.EMIT_END:
-            self.buffer += '}}'
+            appended_text = '}}'
+            self.buffer += appended_text
             self.current_state = State.END
-            return True
+            return self._encoded(appended_text)
+            
+        return None
+        
+    def _get_generation_context(self) -> Dict[str, Any]:
+        """Build context dict for the current generation state.
+            Returns info about:
+                - The original prompt
+                - What's been generated so far
+                - Current parameter being filled
+        """
+        return {
+                "prompt_txt": self.prompt_txt,
+                "current_buffer": self.buffer,
+                "param_value_buffer": self.param_value_buffer,
+                "current_param_name": self.current_param_name,
+                "current_param_type": self.current_param_type,
+                "deterministic_token_ids": self.deterministic_token_ids,
+                "current_state": self.current_state,
+                "selected_function": self.selected_function.name \
+                        if self.selected_function else None
+        }
 
-        return False
-    
     def get_allowed_token_ids(self) -> Set[int]:
         """Resolves all deterministic transitions and returns valid token IDs for 
             LLM states.
         """
-        # TODO: Does it makes sense to keep the gen calls outside the loops?
-        # Won't this actually be slower? Maybe merge both functions in one
-        while self.advance_deterministic():
-            pass
+        while True:
+            det_tokens = self.advance_deterministic()
+            if det_tokens is None:
+                break
+            self.deterministic_token_ids.extend(det_tokens)
+
         print("DEBUG:\n--- INSIDE get_allowed_token_ids ---")
+        print(f"DEBUG: current_state = {self.current_state}")
         allowed_ids: Set[int] = set()
         
         if self.current_state == State.SELECT_FUNCTION:
-            fn_names = [fn_def.name for fn_def in self.functions]
+            allowed_ids = self._get_allowed_function_tokens()
             
-            for fn_name in fn_names:
-                if fn_name.startswith(self.fn_name_buffer):
-                    # What we need to match next
-                    target = fn_name[len(self.fn_name_buffer):]
-                    
-                    # Which vocab tokens are prefixes of target?
-                    for token_id, token_str in self.vocab_mgr.id_to_token.items():
-                        if target.startswith(token_str):
-                            allowed_ids.add(token_id)
+        elif self.current_state == State.SELECT_PARAMETER_VALUE:
+            allowed_ids = self._get_allowed_parameter_value_tokens()
+        
+        return allowed_ids
+    
+    def _get_allowed_function_tokens(self) -> Set[int]:
+        """Returns token IDs that can validly continue a function name."""
+        allowed_ids: Set[int] = set()
+        fn_names = [fn_def.name for fn_def in self.functions]
+        
+        for fn_name in fn_names:
+            if fn_name.startswith(self.fn_name_buffer):
+                # What we need to match next
+                target = fn_name[len(self.fn_name_buffer):]
                 
-        elif self.current_state == State.GEN_STRING:
-            # Does this really allow escaped quotes, \n, etc.??
-            print(f"DEBUG: current_state: {self.current_state}")
-            for token_id, token_str in self.vocab_mgr.id_to_token.items():
-                clean = token_str.strip()
-                if not clean:
-                    continue
+                # Which vocab tokens are prefixes of target?
+                for token_id, token_str in self.vocab_mgr.id_to_token.items():
+                    if target.startswith(token_str):
+                        allowed_ids.add(token_id)
+        
+        return allowed_ids
+    
+    def _get_allowed_parameter_value_tokens(self) -> Set[int]:
+        """Returns token IDs that can validly continue a parameter value,
+           constrained by its schema type.
+           
+           The key insight: the LLM generates the parameter value token-by-token,
+           but we restrict which tokens are "valid" based on the parameter's type.
+           This is the same pattern as function name selection, but for values.
+        """
+        allowed_ids: Set[int] = set()
+        
+        if self.current_param_type == "string":
+            allowed_ids = self._get_allowed_string_tokens()
+        elif self.current_param_type == "number":
+            allowed_ids = self._get_allowed_number_tokens()
+        elif self.current_param_type == "boolean":
+            allowed_ids = self._get_allowed_boolean_tokens()
+        else:
+            # Unknown type; allow everything for now
+            allowed_ids = set(self.vocab_mgr.id_to_token.keys())
+        
+        return allowed_ids
+    
+    def _get_allowed_string_tokens(self) -> Set[int]:
+        """Token IDs that form valid JSON strings.
+           
+           A string parameter value starts with an opening quote and continues
+           until a closing quote. We don't allow unescaped quotes within.
+        """
+        allowed_ids: Set[int] = set()
+        
+        for token_id, token_str in self.vocab_mgr.id_to_token.items():
+            clean = token_str.strip()
+            if not clean:
+                continue
+            
+            # If we haven't started the value yet, only allow opening quote
+            if not self.param_value_buffer:
                 if token_str == '"':
                     allowed_ids.add(token_id)
+            else:
+                # Inside the string, allow closing quote to end
+                if token_str == '"':
+                    allowed_ids.add(token_id)
+                # Allow any token that doesn't contain problematic characters
                 elif not any(c in token_str for c in ['"', '\n', '\r', '\x00']):
                     allowed_ids.add(token_id)
         
-        elif self.current_state == State.GEN_NUMBER:
-            print(f"DEBUG: current_state: {self.current_state}")
-            for token_id, token_str in self.vocab_mgr.id_to_token.items():
-                clean = token_str.strip()
-                if not clean:
-                    continue
-                # numeric token (digits or decimal)
+        return allowed_ids
+    
+    def _get_allowed_number_tokens(self) -> Set[int]:
+        """Token IDs that form valid JSON numbers.
+           
+           A number can be: digits, decimal point, negative sign (at start).
+           We allow comma or closing brace once we have at least one digit.
+        """
+        allowed_ids: Set[int] = set()
+        
+        for token_id, token_str in self.vocab_mgr.id_to_token.items():
+            clean = token_str.strip()
+            if not clean:
+                continue
+            
+            # At the start, allow minus sign or digits
+            if not self.param_value_buffer:
+                if clean in ['-', '.'] or clean.replace('.', '', 1).isdigit():
+                    allowed_ids.add(token_id)
+            else:
+                # Inside, allow digits, decimal point
                 if clean.replace('.', '', 1).isdigit():
                     allowed_ids.add(token_id)
-                # allow comma/brace only if we've already emitted digits
+                # Allow comma or closing brace only if we have content
                 elif clean in [',', '}'] and self._param_has_content:
                     allowed_ids.add(token_id)
         
-        elif self.current_state == State.GEN_BOOLEAN:
-            print(f"DEBUG: current_state: {self.current_state}")
-            for token_id, token_str in self.vocab_mgr.id_to_token.items():
-                clean = token_str.strip()
-                if not clean:
-                    continue
-                if clean in ['true', 'false']:
-                    allowed_ids.add(token_id)
-                elif clean in [',', '}'] and self._param_has_content:
-                    allowed_ids.add(token_id)
-
         return allowed_ids
+    
+    def _get_allowed_boolean_tokens(self) -> Set[int]:
+        """Token IDs that form valid JSON booleans.
+           
+           Only 'true' or 'false'.
+        """
+        allowed_ids: Set[int] = set()
+        
+        for token_id, token_str in self.vocab_mgr.id_to_token.items():
+            clean = token_str.strip()
+            if not clean:
+                continue
+            
+            if clean in ['true', 'false']:
+                allowed_ids.add(token_id)
+            # Allow comma or closing brace only if we have content
+            elif clean in [',', '}'] and self._param_has_content:
+                allowed_ids.add(token_id)
+        
+        return allowed_ids
+    
     def update(self, token_id: int) -> None:
         """Appends chosen token to appropriate buffer and commits on completion.
         """
         token_str = self.vocab_mgr.id_to_token[token_id]
 
-        is_param_state = self.current_state in (
-            State.GEN_STRING,
-            State.GEN_NUMBER,
-            State.GEN_BOOLEAN
-        )
-
-        if is_param_state:
+        # All parameter value states go into param_value_buffer
+        if self.current_state == State.SELECT_PARAMETER_VALUE:
             self.param_value_buffer += token_str
         else:
             self.buffer += token_str
 
         if self.current_state == State.SELECT_FUNCTION:
-            self.fn_name_buffer += token_str
-            print(
-                f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}',"
-                f" token_str='{token_str}'"
+            self._handle_function_selection(token_str)
+            
+        elif self.current_state == State.SELECT_PARAMETER_VALUE:
+            self._handle_parameter_value_selection(token_str)
+
+        # Try to advance deterministically
+        while True:
+            det_tokens = self.advance_deterministic()
+            if det_tokens is None:
+                break
+            self.deterministic_token_ids.extend(det_tokens)
+
+    def _handle_function_selection(self, token_str: str) -> None:
+        """Process token during function name selection."""
+        self.fn_name_buffer += token_str
+        print(
+            f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}',"
+            f" token_str='{token_str}'"
+        )
+
+        matching_fn = next(
+            (f for f in self.functions if f.name == self.fn_name_buffer),
+            None
+        )
+        print(f"DEBUG update: matching_fn={matching_fn}")
+        if matching_fn:
+            self.selected_function = matching_fn
+            self.parameter_queue = deque(
+                self.selected_function.parameters.items()
+            )
+            self.current_state = State.EMIT_PARAMS_HEADER
+        elif not any(f.name.startswith(self.fn_name_buffer) \
+                for f in self.functions):
+            raise CallMeError(
+                f"Invalid function name buffer: '{self.fn_name_buffer}'"
             )
 
-            matching_fn = next(
-                (f for f in self.functions if f.name == self.fn_name_buffer),
-                None
-            )
-            print(f"DEBUG update: matching_fn={matching_fn}")
-            if matching_fn:
-                self.buffer += '"'
-                self.selected_function = matching_fn
-                self.parameter_queue = deque(
-                    self.selected_function.parameters.items()
-                )
-                self.current_state = State.EMIT_PARAMS_HEADER
-            elif not any(f.name.startswith(self.fn_name_buffer) \
-                    for f in self.functions):
-                raise CallMeError(
-                    f"Invalid function name buffer: '{self.fn_name_buffer}'"
-                )
-
-        elif self.current_state == State.GEN_STRING and '"' in token_str:
-            self._commit_param_value()
-            self.buffer += '"'
-            self.current_state = State.EMIT_PARAM_SEP \
-                if self.parameter_queue else State.EMIT_END
-
-        elif self.current_state in (State.GEN_NUMBER, State.GEN_BOOLEAN):
-            if not (',' in token_str or '}' in token_str):
-                self._param_has_content = True
-
-            if ',' in token_str or '}' in token_str:
-                # Strip trailing delimiter token before commit
-                if self.param_value_buffer and self.param_value_buffer[-1] \
-                        in (',', '}'):
-                    self.param_value_buffer = self.param_value_buffer[:-1]
-
+    def _handle_parameter_value_selection(self, token_str: str) -> None:
+        """Process token during parameter value selection.
+        
+           Determines when a parameter value is complete based on the type:
+           - string: ends with closing quote
+           - number: ends with comma or closing brace
+           - boolean: ends with comma or closing brace
+        """
+        # Track that we have content
+        if self.current_param_type == "string" and token_str == '"':
+            if self.param_value_buffer and self.param_value_buffer != '"':
+                # Closing quote found
                 self._commit_param_value()
-                self.current_state = State.EMIT_PARAM_SEP if \
-                    self.parameter_queue else State.EMIT_END
+                self.current_state = State.EMIT_PARAM_SEP \
+                    if self.parameter_queue else State.EMIT_END
+        else:
+            # For non-string types, we need to check for terminators
+            if self.current_param_type in ("number", "boolean"):
+                # Digits, booleans are "content"
+                if token_str.strip() and token_str.strip() not in [',', '}']:
+                    self._param_has_content = True
+                
+                # Check for terminators
+                if token_str.strip() in [',', '}'] and self._param_has_content:
+                    # Remove the terminator from the value
+                    if self.param_value_buffer.endswith(token_str):
+                        self.param_value_buffer = self.param_value_buffer[:-len(token_str)]
+                    
+                    self._commit_param_value()
+                    self._param_has_content = False
+                    self.current_state = State.EMIT_PARAM_SEP \
+                        if self.parameter_queue else State.EMIT_END
 
-        while self.advance_deterministic():
-            pass
-   
     def get_current_state(self) -> State:
         """Compatibility helper used by tests: return current state enum."""
         return self.current_state
-        # Is this really necessary?
 
     def is_complete(self) -> bool:
-          """Check if the state machine has reached the END state.
+        """Check if the state machine has reached the END state.
 
-          Returns:
-              True if state machine is in END state, False otherwise.
-          """
-          return self.current_state == State.END
+        Returns:
+            True if state machine is in END state, False otherwise.
+        """
+        return self.current_state == State.END

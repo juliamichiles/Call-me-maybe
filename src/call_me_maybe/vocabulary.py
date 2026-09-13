@@ -23,7 +23,19 @@ class VocabularyManager:
 
     def _clean_token_string(self, token_str: str) -> str:
         """Converts tokenizer space markers (e.g., 'Ġ') to standard spaces."""
-        cleaned = token_str.replace("Ġ", " ")
+        replacements = {
+                "Ġ": " ",
+                "Ċ": "\n",
+                "ĉ": "\t",
+                "č": "\r",
+                "Ā": "\x00"
+                # add more???
+        }
+        cleaned = token_str
+
+        for marker, replacement in replacements.items():
+            cleaned = cleaned.replace(marker, replacement)
+
         return cleaned
 
     def _load_and_build(self) -> None:
