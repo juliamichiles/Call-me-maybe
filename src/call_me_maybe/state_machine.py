@@ -133,6 +133,7 @@ class JSONStateMachine:
                 - What's been generated so far
                 - Current parameter being filled
         """
+        # UNUSED!!
         return {
                 "prompt_txt": self.prompt_txt,
                 "current_buffer": self.buffer,
@@ -208,7 +209,10 @@ class JSONStateMachine:
         """O(1) lookup using precomputed token sets."""
         if not self.param_value_buffer:
             return self.vocab_mgr.quote_ids
-        return self.vocab_mgr.valid_string_all_ids
+        else:
+            allowed_ids = set(self.vocab_mgr.valid_string_body_ids)
+            allowed_ids.update(self.vocab_mgr.quote_ids)
+            return allowed_ids
     
     def _get_allowed_number_tokens(self) -> Set[int]:
         """O(1) lookup using precomputed number sets."""
@@ -284,26 +288,33 @@ class JSONStateMachine:
            - number: ends with comma or closing brace
            - boolean: ends with comma or closing brace
         """
-        # Track that we have content
-        if self.current_param_type == "string" and token_str == '"':
-            if self.param_value_buffer and self.param_value_buffer != '"':
-                # Closing quote found
+        if self.current_param_type == "string":
+            # Handle string values: opening quote, content, closing quote
+            if token_str == '"' and not self._param_has_content:
+                # Opening quote
+                self.param_value_buffer += token_str
+            elif token_str == '"' and self._param_has_content:
+                # Closing quote (we already have content)
+                self.param_value_buffer += token_str
                 self._commit_param_value()
                 self.current_state = State.EMIT_PARAM_SEP \
                     if self.parameter_queue else State.EMIT_END
+            else:
+                # String content
+                self.param_value_buffer += token_str
+                self._param_has_content = True
         else:
-            # For non-string types, we need to check for terminators
+            # For non-string types (number, boolean), check for terminators
             if self.current_param_type in ("number", "boolean"):
-                # Digits, booleans are "content"
                 if token_str.strip() and token_str.strip() not in [',', '}']:
                     self._param_has_content = True
-                
+
                 # Check for terminators
                 if token_str.strip() in [',', '}'] and self._param_has_content:
                     # Remove the terminator from the value
                     if self.param_value_buffer.endswith(token_str):
                         self.param_value_buffer = self.param_value_buffer[:-len(token_str)]
-                    
+
                     self._commit_param_value()
                     self._param_has_content = False
                     self.current_state = State.EMIT_PARAM_SEP \
