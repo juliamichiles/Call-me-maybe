@@ -174,13 +174,11 @@ class JSONStateMachine:
         
         for fn_name in fn_names:
             if fn_name.startswith(self.fn_name_buffer):
-                # What we need to match next
                 target = fn_name[len(self.fn_name_buffer):]
-                
-                # Which vocab tokens are prefixes of target?
-                for token_id, token_str in self.vocab_mgr.id_to_token.items():
-                    if target.startswith(token_str):
-                        allowed_ids.add(token_id)
+                for i in range(1, len(target) + 1):
+                    prefix = target[:i]
+                    if prefix in self.vocab_mgr.token_to_id:
+                        allowed_ids.update(self.vocab_mgr.token_to_id[prefix])
         
         return allowed_ids
     
@@ -207,78 +205,27 @@ class JSONStateMachine:
         return allowed_ids
     
     def _get_allowed_string_tokens(self) -> Set[int]:
-        """Token IDs that form valid JSON strings.
-           
-           A string parameter value starts with an opening quote and continues
-           until a closing quote. We don't allow unescaped quotes within.
-        """
-        allowed_ids: Set[int] = set()
-        
-        for token_id, token_str in self.vocab_mgr.id_to_token.items():
-            clean = token_str.strip()
-            if not clean:
-                continue
-            
-            # If we haven't started the value yet, only allow opening quote
-            if not self.param_value_buffer:
-                if token_str == '"':
-                    allowed_ids.add(token_id)
-            else:
-                # Inside the string, allow closing quote to end
-                if token_str == '"':
-                    allowed_ids.add(token_id)
-                # Allow any token that doesn't contain problematic characters
-                elif not any(c in token_str for c in ['"', '\n', '\r', '\x00']):
-                    allowed_ids.add(token_id)
-        
-        return allowed_ids
+        """O(1) lookup using precomputed token sets."""
+        if not self.param_value_buffer:
+            return self.vocab_mgr.quote_ids
+        return self.vocab_mgr.valid_string_all_ids
     
     def _get_allowed_number_tokens(self) -> Set[int]:
-        """Token IDs that form valid JSON numbers.
-           
-           A number can be: digits, decimal point, negative sign (at start).
-           We allow comma or closing brace once we have at least one digit.
-        """
-        allowed_ids: Set[int] = set()
-        
-        for token_id, token_str in self.vocab_mgr.id_to_token.items():
-            clean = token_str.strip()
-            if not clean:
-                continue
-            
-            # At the start, allow minus sign or digits
-            if not self.param_value_buffer:
-                if clean in ['-', '.'] or clean.replace('.', '', 1).isdigit():
-                    allowed_ids.add(token_id)
-            else:
-                # Inside, allow digits, decimal point
-                if clean.replace('.', '', 1).isdigit():
-                    allowed_ids.add(token_id)
-                # Allow comma or closing brace only if we have content
-                elif clean in [',', '}'] and self._param_has_content:
-                    allowed_ids.add(token_id)
-        
+        """O(1) lookup using precomputed number sets."""
+        if not self.param_value_buffer:
+            return set(self.vocab_mgr.number_start_ids)
+
+        allowed_ids = set(self.vocab_mgr.number_body_ids)
+        if self._param_has_content:
+            allowed_ids.update(self.vocab_mgr.delimiter_ids)
         return allowed_ids
-    
+
     def _get_allowed_boolean_tokens(self) -> Set[int]:
-        """Token IDs that form valid JSON booleans.
-           
-           Only 'true' or 'false'.
-        """
-        allowed_ids: Set[int] = set()
-        
-        for token_id, token_str in self.vocab_mgr.id_to_token.items():
-            clean = token_str.strip()
-            if not clean:
-                continue
-            
-            if clean in ['true', 'false']:
-                allowed_ids.add(token_id)
-            # Allow comma or closing brace only if we have content
-            elif clean in [',', '}'] and self._param_has_content:
-                allowed_ids.add(token_id)
-        
-        return allowed_ids
+        """O(1) lookup using precomputed boolean sets."""
+        allowed_ids = set(self.vocab_mgr.boolean_ids)
+        if self._param_has_content:
+            allowed_ids.update(self.vocab_mgr.delimiter_ids)
+        return allowed_ids 
     
     def update(self, token_id: int) -> None:
         """Appends chosen token to appropriate buffer and commits on completion.

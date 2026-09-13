@@ -1,7 +1,7 @@
 from typing import Dict, DefaultDict, Set
 import json
 from collections import defaultdict
-from functools import lru_cache
+# from functools import lru_cache
 
 from .trie import VocabularyTrie
 
@@ -11,24 +11,33 @@ class VocabularyManager:
 
     def __init__(self, vocab_file_path: str) -> None:
         self.vocab_path = vocab_file_path
-        self.id_to_token: Dict[int, str] = {}
-        # map token string -> set of token ids (raw and cleaned variants)
+        self.id_to_token: Dict[int, str] = {} 
         self.token_to_id: DefaultDict[str, Set[int]] = defaultdict(set)
         self.trie = VocabularyTrie()
+        
+        # Pre computed token classification sets
+        self.quote_ids: Set[int] = set()
+        self.valid_string_body_ids: Set[int] = set()
+        self.valid_string_all_ids: Set[int] = set()
+        self.number_start_ids: Set[int] = set()
+        self.number_body_ids: Set[int] = set()
+        self.boolean_ids: Set[int] = set()
+        self.delimiter_ids: Set[int] = set()
+
         self._load_and_build()
 
-    @lru_cache(maxsize=4096)
-    def tokens_for_prefix(self, prefix: str) -> tuple[int, ...]:
-        return tuple(self.trie.get_tokens_for_prefix(prefix))
+    # @lru_cache(maxsize=4096)
+    # def tokens_for_prefix(self, prefix: str) -> tuple[int, ...]:
+    #    return tuple(self.trie.get_tokens_for_prefix(prefix))
 
     def _clean_token_string(self, token_str: str) -> str:
         """Converts tokenizer space markers (e.g., 'Ġ') to standard spaces."""
         replacements = {
                 "Ġ": " ",
-                "Ċ": "\n",
-                "ĉ": "\t",
-                "č": "\r",
-                "Ā": "\x00"
+                # "Ċ": "\n",
+                # "ĉ": "\t",
+                # "č": "\r",
+                # "Ā": "\x00"
                 # add more???
         }
         cleaned = token_str
@@ -52,3 +61,26 @@ class VocabularyManager:
             self.token_to_id[raw_token].add(token_id)
             self.trie.insert(clean_str, token_id)
             self.trie.insert(raw_token, token_id)
+
+            # --- Precompute Categories ---
+            if clean_str == '"':
+                self.quote_ids.add(token_id)
+
+            if not any(c in clean_str for c in ['"', '\n', '\r', '\x00']):
+                self.valid_string_body_ids.add(token_id)
+
+            clean_stripped = clean_str.strip()
+            if clean_stripped:
+                if clean_stripped in ['-', '.'] or \
+                        clean_stripped.replace('.', '', 1).isdigit():
+                    self.number_start_ids.add(token_id)
+                if clean_stripped.replace('.', '', 1).isdigit():
+                    self.number_body_ids.add(token_id)
+                if clean_stripped in ['true', 'false']:
+                    self.boolean_ids.add(token_id)
+                if clean_stripped in [',', '}']:
+                    self.delimiter_ids.add(token_id)
+
+        self.valid_string_all_ids = self.quote_ids | self.valid_string_body_ids
+
+

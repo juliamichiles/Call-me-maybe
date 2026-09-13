@@ -113,8 +113,11 @@ class Generation:
             logits = model.get_logits_from_input_ids(input_ids)
             print(f"DEBUG: logitos: {logits[0]} -> {logits[-1]}")
             next_token = select_next_token(logits, allowed_ids)
-            print(f"DEBUG: next token: {next_token}")
-            # debug: inspect why allowed_ids might be empty
+            debug_token_str = vocab_mgr.id_to_token[next_token]
+            print(
+                    f"DEBUG: next token: {next_token}"
+                    f" | token_str={debug_token_str!r}"
+                    )
             print("DEBUG: buffer:", repr(state_machine.buffer))
             print("DEBUG: state:", state_machine.current_state)
             print("DEBUG: selected_function:", getattr(
