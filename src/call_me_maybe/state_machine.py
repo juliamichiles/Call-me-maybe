@@ -1,6 +1,7 @@
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Set, Optional
 from collections import deque
+from typing_extensions import TypeVarTuple
 # add local imports
 from .vocabulary import VocabularyManager
 from .schemas import FunctionDefinition, ParameterProperty
@@ -14,23 +15,19 @@ class State(Enum):
     """ Enumerations for each possible generation state to further determine if
             LLM should be called or bypassed in a given state.
     """
-    # --- FORCED / DETERMINISTIC STATES (LLM Bypassed) ---
-    EMIT_START = auto()          # Emits '{"name": "'
-    EMIT_PARAMS_HEADER = auto()  # Emits '", "parameters": {'
-    EMIT_PARAM_KEY = auto()      # Emits '"<param_name>": '
-    EMIT_PARAM_SEP = auto()      # Emits ', ' (when moving to the next parameter)
-    EMIT_END = auto()            # Emits '}}'
+    # --- FORCED / DETERMINISTIC STATES ---
+    EMIT_START = auto()
+    EMIT_PARAMS_HEADER = auto()
+    EMIT_PARAM_KEY = auto()
+    EMIT_PARAM_SEP = auto()
+    EMIT_END = auto()
 
-    # --- LLM-DRIVEN STATES (LLM Called) ---
-    SELECT_FUNCTION = auto()        # LLM picks function name (e.g., "fn_add_numbers")
-    SELECT_PARAMETER_VALUE = auto() # LLM extracts/selects parameter value from prompt
-    GEN_STRING = auto()             # LLM generates string argument content (constrained)
-    GEN_NUMBER = auto()             # LLM generates numeric argument digits/decimal (constrained)
-    GEN_BOOLEAN = auto()            # LLM selects 'true' or 'false' (constrained)
+    # --- LLM-DRIVEN STATES ---
+    SELECT_FUNCTION = auto()
+    SELECT_PARAMETER_VALUE = auto()
 
     # --- TERMINAL STATE ---
-    END = auto()                 # Generation finished
-
+    END = auto() 
 
 class JSONStateMachine:
     """Tracks current state during token generation and determines allowed
@@ -60,6 +57,7 @@ class JSONStateMachine:
         self.selected_function: Optional[FunctionDefinition] = None
         self.parameter_queue: deque[Tuple[str, ParameterProperty]] = deque()
         self._param_has_content = False
+        self._string_open = False
         self.fn_name_buffer = ""
         self.param_value_buffer = ""
         self.current_param_name = ""  # Track which parameter we're filling
@@ -99,6 +97,7 @@ class JSONStateMachine:
         if self.current_state == State.EMIT_PARAM_KEY:
             p_name, p_prop = self.parameter_queue.popleft()
             self._param_has_content = False
+            self._string_open = False
             self.param_value_buffer = ""
             self.current_param_name = p_name
             self.current_param_type = p_prop.type
@@ -169,50 +168,44 @@ class JSONStateMachine:
         return allowed_ids
     
     def _get_allowed_function_tokens(self) -> Set[int]:
-        """Returns token IDs that can validly continue a function name."""
+        """Return tokens that can continue the current function name."""
         allowed_ids: Set[int] = set()
-        fn_names = [fn_def.name for fn_def in self.functions]
         
-        for fn_name in fn_names:
-            if fn_name.startswith(self.fn_name_buffer):
-                target = fn_name[len(self.fn_name_buffer):]
-                for i in range(1, len(target) + 1):
-                    prefix = target[:i]
-                    if prefix in self.vocab_mgr.token_to_id:
-                        allowed_ids.update(self.vocab_mgr.token_to_id[prefix])
-        
+        for function in self.functions:
+            name = function.name
+            if not name.startswith(self.fn_name_buffer):
+                continue
+            remaining = name[len(self.fn_name_buffer):]
+            allowed_ids.update(
+                self.vocab_mgr.token_ids_that_prefix(remaining)
+            )
+
         return allowed_ids
-    
+
     def _get_allowed_parameter_value_tokens(self) -> Set[int]:
-        """Returns token IDs that can validly continue a parameter value,
-           constrained by its schema type.
-           
-           The key insight: the LLM generates the parameter value token-by-token,
-           but we restrict which tokens are "valid" based on the parameter's type.
-           This is the same pattern as function name selection, but for values.
-        """
-        allowed_ids: Set[int] = set()
-        
-        if self.current_param_type == "string":
-            allowed_ids = self._get_allowed_string_tokens()
-        elif self.current_param_type == "number":
-            allowed_ids = self._get_allowed_number_tokens()
-        elif self.current_param_type == "boolean":
-            allowed_ids = self._get_allowed_boolean_tokens()
-        else:
-            # Unknown type; allow everything for now
-            allowed_ids = set(self.vocab_mgr.id_to_token.keys())
-        
-        return allowed_ids
+        """Return tokens valid for the current parameter value."""
+
+        parameter_type = self.current_param_type.lower()
+
+        if parameter_type == "string":
+            return self._get_allowed_string_tokens()
+        if parameter_type in ("number", "integer"):
+            return self._get_allowed_number_tokens()
+        if parameter_type == "boolean":
+            return self._get_allowed_boolean_tokens()
+        # FIXME: Is that right?? Or should I handle other types differently?
+        raise CallMeError(
+            f"Unsupported parameter type: {self.current_param_type}"
+        )   
     
     def _get_allowed_string_tokens(self) -> Set[int]:
         """O(1) lookup using precomputed token sets."""
-        if not self.param_value_buffer:
+        if not self._string_open:
             return self.vocab_mgr.quote_ids
-        else:
-            allowed_ids = set(self.vocab_mgr.valid_string_body_ids)
-            allowed_ids.update(self.vocab_mgr.quote_ids)
-            return allowed_ids
+        
+        allowed_ids = set(self.vocab_mgr.valid_string_body_ids)
+        allowed_ids.update(self.vocab_mgr.quote_ids)
+        return allowed_ids
     
     def _get_allowed_number_tokens(self) -> Set[int]:
         """O(1) lookup using precomputed number sets."""
@@ -225,11 +218,30 @@ class JSONStateMachine:
         return allowed_ids
 
     def _get_allowed_boolean_tokens(self) -> Set[int]:
-        """O(1) lookup using precomputed boolean sets."""
-        allowed_ids = set(self.vocab_mgr.boolean_ids)
+        """Return tokens that can continue true/false."""
+
+        if not self.param_value_buffer:
+            allowed_ids: Set[int] = set()
+            allowed_ids.update(
+                self.vocab_mgr.token_ids_that_prefix("true")
+            )
+            allowed_ids.update(
+                self.vocab_mgr.token_ids_that_prefix("false")
+            )
+            return allowed_ids
+
+        allowed_ids = set()
+
+        for value in ("true", "false"):
+            if value.startswith(self.param_value_buffer):
+                remaining = value[len(self.param_value_buffer):]
+                allowed_ids.update(
+                    self.vocab_mgr.token_ids_that_prefix(remaining)
+                )
         if self._param_has_content:
             allowed_ids.update(self.vocab_mgr.delimiter_ids)
-        return allowed_ids 
+
+        return allowed_ids
     
     def update(self, token_id: int) -> None:
         """Appends chosen token to appropriate buffer and commits on completion.
@@ -289,18 +301,20 @@ class JSONStateMachine:
            - boolean: ends with comma or closing brace
         """
         if self.current_param_type == "string":
-            # Handle string values: opening quote, content, closing quote
-            if token_str == '"' and not self._param_has_content:
-                # Opening quote
+            if token_str == '"' and not self._string_open:
                 self.param_value_buffer += token_str
-            elif token_str == '"' and self._param_has_content:
-                # Closing quote (we already have content)
+                self._string_open = True
+            elif token_str == '"' and self._string_open:
                 self.param_value_buffer += token_str
                 self._commit_param_value()
-                self.current_state = State.EMIT_PARAM_SEP \
-                    if self.parameter_queue else State.EMIT_END
+                self._string_open = False
+                self._param_has_content = False
+                self.current_state = (
+                        State.EMIT_PARAM_SEP
+                        if self.parameter_queue
+                        else State.EMIT_END
+                )
             else:
-                # String content
                 self.param_value_buffer += token_str
                 self._param_has_content = True
         else:

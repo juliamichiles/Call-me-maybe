@@ -5,6 +5,7 @@ class TrieNode:
     def __init__(self) -> None:
         self.children: Dict[str, TrieNode] = {}
         self.token_ids: Set[int] = set()
+        self.terminal_token_ids: Set[int] = set()
 
 
 class VocabularyTrie:
@@ -20,8 +21,11 @@ class VocabularyTrie:
         for char in token_str:
             if char not in current.children:
                 current.children[char] = TrieNode()
+
             current = current.children[char]
             current.token_ids.add(token_id)
+
+        current.terminal_token_ids.add(token_id)
 
     def get_tokens_for_prefix(self, prefix: str) -> Set[int]:
         """Returns all token IDs whose string representations start with 
@@ -33,3 +37,19 @@ class VocabularyTrie:
                 return set()
             current = current.children[char]
         return current.token_ids
+    
+    def get_token_ids_that_prefix(self, text: str) -> Set[int]:
+        """Return token IDs whose complete token string is a prefix of text.
+        """
+        current = self.root
+        result: Set[int] = set()
+
+        for char in text:
+            if char not in current.children:
+                break
+
+            current = current.children[char]
+            result.update(current.terminal_token_ids)
+
+        return result
+

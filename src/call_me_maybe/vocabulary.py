@@ -83,4 +83,6 @@ class VocabularyManager:
 
         self.valid_string_all_ids = self.quote_ids | self.valid_string_body_ids
 
-
+    def token_ids_that_prefix(self, text: str) -> Set[int]:
+        """Return token IDs whose complete token string is a prefix of text."""
+        return self.trie.get_token_ids_that_prefix(text)
