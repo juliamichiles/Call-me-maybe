@@ -6,12 +6,17 @@
     - see possible_solution.md
 
 ## Next:
-- [ ] Stopped hallucinating numbers, but its still generating malformed JSON
-- [ ] Not handling getting parameters from LLM well
-- [ ] Now hallucinates numbers endlessly...
-- [ ] Generating invalid JSON, but much faster
-- [ ] (see tests)
-- [ ] write orchestrator that will call state_machine and trie
+- [ ] Import time and inspect where are the most expensive parts 
+- [ ] check how debug prints actually impact run time 
+- [ ] implement simple time-cheap visualization
+
+## Fixed:
+- [X] Stopped hallucinating numbers, but its still generating malformed JSON
+- [X] Not handling getting parameters from LLM well
+- [X] Now hallucinates numbers endlessly...
+- [X] Generating invalid JSON, but much faster
+- [X] (see tests)
+- [X] write orchestrator that will call state_machine and trie
 
 ## Questions:
 - What does the LLM even do with the prompt after encoding it? How is it used?

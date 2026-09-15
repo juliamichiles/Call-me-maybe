@@ -94,46 +94,46 @@ class Generation:
                 model,
                 vocab_mgr,
         ) 
-        print(f"DEBUG: max_tokens: {max_tokens}")
+        # print(f"DEBUG: max_tokens: {max_tokens}")
         
         for _ in range(max_tokens):
             
             allowed_ids = state_machine.get_allowed_token_ids()
-            print(f"DEBUG: allowed_ids count: {len(allowed_ids)}") 
+            # print(f"DEBUG: allowed_ids count: {len(allowed_ids)}") 
             
             if state_machine.deterministic_token_ids:
                 input_ids.extend(state_machine.deterministic_token_ids)
                 state_machine.deterministic_token_ids.clear()
 
             if state_machine.is_complete():
-                print("DEBUG: state:", state_machine.current_state)
-                print(f"DEBUG: state machine is complete: {state_machine.is_complete()}")
+                # print("DEBUG: state:", state_machine.current_state)
+                # print(f"DEBUG: state machine is complete: {state_machine.is_complete()}")
                 break
 
             logits = model.get_logits_from_input_ids(input_ids)
-            print(f"DEBUG: logitos: {logits[0]} -> {logits[-1]}")
+            # print(f"DEBUG: logitos: {logits[0]} -> {logits[-1]}")
             next_token = select_next_token(logits, allowed_ids)
-            debug_token_str = vocab_mgr.id_to_token[next_token]
-            print(
-                    f"DEBUG: next token: {next_token}"
-                    f" | token_str={debug_token_str!r}"
-                    )
-            print("DEBUG: buffer:", repr(state_machine.buffer))
-            print("DEBUG: state:", state_machine.current_state)
-            print("DEBUG: selected_function:", getattr(
-               state_machine.selected_function, "name", None
-            ))
-            print("DEBUG: candidate_allowed_count:", len(allowed_ids))
+            # debug_token_str = vocab_mgr.id_to_token[next_token]
+            # print(
+            #        f"DEBUG: next token: {next_token}"
+            #        f" | token_str={debug_token_str!r}"
+            #        )
+            # print("DEBUG: buffer:", repr(state_machine.buffer))
+            # print("DEBUG: state:", state_machine.current_state)
+            # print("DEBUG: selected_function:", getattr(
+            #   state_machine.selected_function, "name", None
+            # ))
+            # print("DEBUG: candidate_allowed_count:", len(allowed_ids))
             state_machine.update(next_token)
             input_ids.append(next_token)
 
-            print(f"DEBUG: sm_buffer={state_machine.buffer}")
+            # print(f"DEBUG: sm_buffer={state_machine.buffer}")
         try:
             parsed_output = json.loads(state_machine.buffer)
             return {
                 "prompt": prompt_txt,
                 "name": parsed_output.get("name", ""),
                 "parameters": parsed_output.get("parameters", {})
-            }
+                }
         except json.JSONDecodeError as e:
             raise CallMeError(f"Generated output failed JSON parsing: {e}")

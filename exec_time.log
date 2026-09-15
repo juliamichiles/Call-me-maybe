@@ -1,20 +1,9 @@
-[24.08 - 11:45]
-real    2m31.073s
-user    5m53.776s
-sys     1m2.113s
+[15.09.26 (13:50) - functional PRINTING debug log]
+real    10m11.290s
+user    53m35.365s
+sys     1m23.596s
 
-[24.08 - 12:45 (still not working btw)] 
-real    1m26.445s
-user    1m6.821s
-sys     0m53.373s
-
------
-
-[13.09.26 - 15:13]
-[INFO: gets an errors, but goes through almost all prompts]
-Application error: Generated output failed JSON parsing: Invalid \escape: line 1 column 120 (char 119)
-make: *** [Makefile:14: run] Error 1
-
-real    9m15.069s
-user    45m2.409s
-sys     2m14.465s
+[15.09.26 (14:00) - functional NOT PRINTING debug log]
+real    10m9.858s
+user    53m6.754s
+sys     1m33.621s

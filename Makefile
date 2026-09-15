@@ -1,8 +1,9 @@
 PYTHON = uv run python
 
-# INPUT = data/input/function_calling_tests.json
+INPUT = data/input/function_calling_tests.json
 # INPUT = data/input/function_calling_tests_NO_NUMBERS.json
-INPUT = data/input/function_calling_tests_JUST_REGEX.json 
+# INPUT = data/input/function_calling_tests_JUST_REGEX.json 
+# INPUT = data/input/function_calling_tests_NO_REGEX.json
 FUNCTIONS = data/input/functions_definition.json
 OUTPUT = data/output/function_calling_results.json
 

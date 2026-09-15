@@ -1,7 +1,9 @@
 from enum import Enum, auto
+import enum
+from os import remove
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Set, Optional
 from collections import deque
-from typing_extensions import TypeVarTuple
+# from typing_extensions import TypeVarTuple
 # add local imports
 from .vocabulary import VocabularyManager
 from .schemas import FunctionDefinition, ParameterProperty
@@ -57,6 +59,7 @@ class JSONStateMachine:
         self.selected_function: Optional[FunctionDefinition] = None
         self.parameter_queue: deque[Tuple[str, ParameterProperty]] = deque()
         self._param_has_content = False
+        self._escape_active = False
         self._string_open = False
         self.fn_name_buffer = ""
         self.param_value_buffer = ""
@@ -98,6 +101,7 @@ class JSONStateMachine:
             p_name, p_prop = self.parameter_queue.popleft()
             self._param_has_content = False
             self._string_open = False
+            self._escape_active = False
             self.param_value_buffer = ""
             self.current_param_name = p_name
             self.current_param_type = p_prop.type
@@ -155,8 +159,8 @@ class JSONStateMachine:
                 break
             self.deterministic_token_ids.extend(det_tokens)
 
-        print("DEBUG:\n--- INSIDE get_allowed_token_ids ---")
-        print(f"DEBUG: current_state = {self.current_state}")
+        # print("DEBUG:\n--- INSIDE get_allowed_token_ids ---")
+        # print(f"DEBUG: current_state = {self.current_state}")
         allowed_ids: Set[int] = set()
         
         if self.current_state == State.SELECT_FUNCTION:
@@ -270,16 +274,16 @@ class JSONStateMachine:
     def _handle_function_selection(self, token_str: str) -> None:
         """Process token during function name selection."""
         self.fn_name_buffer += token_str
-        print(
-            f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}',"
-            f" token_str='{token_str}'"
-        )
+        # print(
+        #    f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}',"
+        #    f" token_str='{token_str}'"
+        # )
 
         matching_fn = next(
             (f for f in self.functions if f.name == self.fn_name_buffer),
             None
         )
-        print(f"DEBUG update: matching_fn={matching_fn}")
+        # print(f"DEBUG update: matching_fn={matching_fn}")
         if matching_fn:
             self.selected_function = matching_fn
             self.parameter_queue = deque(
@@ -294,38 +298,43 @@ class JSONStateMachine:
 
     def _handle_parameter_value_selection(self, token_str: str) -> None:
         """Process token during parameter value selection.
-        
-           Determines when a parameter value is complete based on the type:
-           - string: ends with closing quote
-           - number: ends with comma or closing brace
-           - boolean: ends with comma or closing brace
         """
         if self.current_param_type == "string":
-            if token_str == '"' and not self._string_open:
-                self.param_value_buffer += token_str
-                self._string_open = True
-            elif token_str == '"' and self._string_open:
-                self.param_value_buffer += token_str
-                self._commit_param_value()
-                self._string_open = False
-                self._param_has_content = False
-                self.current_state = (
-                        State.EMIT_PARAM_SEP
-                        if self.parameter_queue
-                        else State.EMIT_END
-                )
-            else:
-                self.param_value_buffer += token_str
+            if not self._string_open:
+                if '"' in token_str:
+                    self._string_open = True
+                    idx = token_str.find('"')
+                    token_str = token_str[idx + 1:]
+                else:
+                    return
+            if self._string_open:
+                for i, char in enumerate(token_str):
+                    if self._escape_active:
+                        self._escape_active = False
+                    elif char == '\\':
+                        self._escape_active = True
+                    elif char == '"':
+                        # closing quote, truncate trailing chars
+                        rm_len = len(token_str) - i - 1
+                        if rm_len > 0:
+                            self.param_value_buffer = \
+                                    self.param_value_buffer[:-rm_len]
+                        self._commit_param_value()
+                        self._string_open = False
+                        self._param_has_content = False
+                        self._escape_active = False
+                        self.current_state = (
+                                State.EMIT_PARAM_SEP
+                                if self.parameter_queue
+                                else State.EMIT_END
+                        )
+                        return
                 self._param_has_content = True
         else:
-            # For non-string types (number, boolean), check for terminators
             if self.current_param_type in ("number", "boolean"):
                 if token_str.strip() and token_str.strip() not in [',', '}']:
                     self._param_has_content = True
-
-                # Check for terminators
                 if token_str.strip() in [',', '}'] and self._param_has_content:
-                    # Remove the terminator from the value
                     if self.param_value_buffer.endswith(token_str):
                         self.param_value_buffer = self.param_value_buffer[:-len(token_str)]
 

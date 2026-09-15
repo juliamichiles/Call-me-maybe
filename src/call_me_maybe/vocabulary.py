@@ -66,7 +66,7 @@ class VocabularyManager:
             if clean_str == '"':
                 self.quote_ids.add(token_id)
 
-            if not any(c in clean_str for c in ['"', '\n', '\r', '\x00']):
+            if not any(c in clean_str for c in ['\n', '\r', '\x00']):
                 self.valid_string_body_ids.add(token_id)
 
             clean_stripped = clean_str.strip()
