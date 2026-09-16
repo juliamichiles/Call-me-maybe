@@ -1,6 +1,8 @@
 import json
 from typing import List, Dict, Any, Set, TYPE_CHECKING
-import numpy as np 
+import time
+import numpy as np
+
 
 from .schemas import FunctionDefinition
 from .state_machine import JSONStateMachine
@@ -87,7 +89,10 @@ class Generation:
         """
 
         formated_prompt = self._format_prompt(prompt_txt)
+        t_encode_start = time.perf_counter()
         input_ids: List[int] = model.encode(formated_prompt).tolist()[0]
+        t_encode_end = time.perf_counter()
+        
         state_machine = JSONStateMachine(
                 prompt_txt,
                 self.functions,
@@ -96,6 +101,9 @@ class Generation:
         ) 
         # print(f"DEBUG: max_tokens: {max_tokens}")
         
+        t_gen_start = time.perf_counter()
+        token_count = 0
+
         for _ in range(max_tokens):
             
             allowed_ids = state_machine.get_allowed_token_ids()
@@ -113,6 +121,7 @@ class Generation:
             logits = model.get_logits_from_input_ids(input_ids)
             # print(f"DEBUG: logitos: {logits[0]} -> {logits[-1]}")
             next_token = select_next_token(logits, allowed_ids)
+            token_count += 1
             # debug_token_str = vocab_mgr.id_to_token[next_token]
             # print(
             #        f"DEBUG: next token: {next_token}"
@@ -126,7 +135,13 @@ class Generation:
             # print("DEBUG: candidate_allowed_count:", len(allowed_ids))
             state_machine.update(next_token)
             input_ids.append(next_token)
-
+        t_gen_end = time.perf_counter()
+        import sys
+        print(
+                f"[TIMING] encode: {(t_encode_end - t_encode_start)*1000:.2f}ms"
+                f" | generation loop ({token_count} tokens):"
+                f" {(t_gen_end - t_gen_start)*1000:.2f}ms", file=sys.stderr
+        )
             # print(f"DEBUG: sm_buffer={state_machine.buffer}")
         try:
             parsed_output = json.loads(state_machine.buffer)
@@ -134,6 +149,6 @@ class Generation:
                 "prompt": prompt_txt,
                 "name": parsed_output.get("name", ""),
                 "parameters": parsed_output.get("parameters", {})
-                }
+            }
         except json.JSONDecodeError as e:
             raise CallMeError(f"Generated output failed JSON parsing: {e}")

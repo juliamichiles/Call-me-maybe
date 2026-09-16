@@ -9,6 +9,7 @@
 - [ ] Import time and inspect where are the most expensive parts 
 - [ ] check how debug prints actually impact run time 
 - [ ] implement simple time-cheap visualization
+- [ ] add more try/except blocks + add them on imports (for pydantic and other external stuff)
 
 ## Fixed:
 - [X] Stopped hallucinating numbers, but its still generating malformed JSON
@@ -29,7 +30,8 @@
 - [ ] can have custom max_line_len in .flake8 file? Don't think so...
 
 ## Testing:
-- [ ] write a "main" for state_machine:
+- [ ] write more input files, invalid files etc.
+- [X] write a "main" for state_machine:
     - print data structures
     - print state and buffer content for each iteration
     - try to actually see it working
