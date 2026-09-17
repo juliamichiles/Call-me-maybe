@@ -117,8 +117,15 @@ class Generation:
                 # print("DEBUG: state:", state_machine.current_state)
                 # print(f"DEBUG: state machine is complete: {state_machine.is_complete()}")
                 break
-
+            
+            t_model_start = time.perf_counter()
             logits = model.get_logits_from_input_ids(input_ids)
+            t_model_end = time.perf_counter()
+
+            print(
+                    f"[TIMING.TOKEN] model: "
+                    f"{(t_model_end - t_model_start) * 1000:.2f}ms"
+            )
             # print(f"DEBUG: logitos: {logits[0]} -> {logits[-1]}")
             next_token = select_next_token(logits, allowed_ids)
             token_count += 1

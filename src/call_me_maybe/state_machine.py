@@ -51,6 +51,7 @@ class JSONStateMachine:
               model: The LLM model instance.
               vocab_mgr: VocabularyManager instance for token lookups.
           """
+        # FIXME: Maybe split this in two classes bc look at the size of this...
         self.prompt_txt = prompt_txt
         self.functions = functions
         self.vocab_mgr = vocab_mgr
@@ -64,12 +65,29 @@ class JSONStateMachine:
         self._string_open = False
         self.fn_name_buffer = ""
         self.param_value_buffer = ""
+        
+        self._function_token_cache: Dict[str, Set[int]] = {}
+        self._encoded_cache: Dict[str, List[int]] = {}
+        self._parameter_token_cache: Dict[
+                Tuple[str, str, bool, bool],
+                Set[int]
+        ] = {}
+
         self.current_param_name = ""  # Track which parameter we're filling
         self.current_param_type = ""  # Track the type of current parameter
         self.buffer = ""
 
     def _encoded(self, text: str) -> List[int]:
-       return self.model.encode(text).tolist()[0]
+        """Encode text once and reuse the result for repeated syntax."""
+        cached = self._encoded_cache.get(text)
+
+        if cached is not None:
+            return cached
+
+        token_ids = self.model.encode(text).tolist()[0]
+        self._encoded_cache[text] = token_ids
+
+        return token_ids
      
     def _commit_param_value(self) -> None:
         """Appends accumulated parameter value to main buffer and resets local
@@ -196,7 +214,16 @@ class JSONStateMachine:
         return allowed_ids
     
     def _get_allowed_function_tokens(self) -> Set[int]:
-        """Return tokens that can continue the current function name."""
+        """Return tokens that can continue the current function name.
+
+            Results are cached by the current function-name prefix because the
+            set of valid tokens is deterministic for a given prefix.
+        """
+        cached = self._function_token_cache.get(self.fn_name_buffer)
+
+        if cached is not None:
+            return cached
+
         allowed_ids: Set[int] = set()
         
         for function in self.functions:
@@ -207,33 +234,53 @@ class JSONStateMachine:
             allowed_ids.update(
                 self.vocab_mgr.token_ids_that_prefix(remaining)
             )
+            self._function_token_cache[self.fn_name_buffer] = allowed_ids
 
         return allowed_ids
 
     def _get_allowed_parameter_value_tokens(self) -> Set[int]:
-        """Return tokens valid for the current parameter value."""
+        """Return tokens valid for the current parameter value.
 
+        The result is cached using the state variables that determine the
+        valid token set.
+        """
         parameter_type = self.current_param_type.lower()
 
+        cache_key = (
+            parameter_type,
+            self.param_value_buffer,
+            self._string_open,
+            self._param_has_content,
+        )
+
+        cached = self._parameter_token_cache.get(cache_key)
+
+        if cached is not None:
+            return cached
+
+        # FIXME: Accept more words: text, float, int, etc.
         if parameter_type == "string":
-            return self._get_allowed_string_tokens()
-        if parameter_type in ("number", "integer"):
-            return self._get_allowed_number_tokens()
-        if parameter_type == "boolean":
-            return self._get_allowed_boolean_tokens()
-        # FIXME: Is that right?? Or should I handle other types differently?
-        raise CallMeError(
-            f"Unsupported parameter type: {self.current_param_type}"
-        )   
+            allowed_ids = self._get_allowed_string_tokens()
+        elif parameter_type in ("number", "integer"):
+            allowed_ids = self._get_allowed_number_tokens()
+        elif parameter_type in ("boolean", "bool"):
+            allowed_ids = self._get_allowed_boolean_tokens()
+
+        else:
+            raise CallMeError(
+                f"Unsupported parameter type: {self.current_param_type}"
+            )
+
+        self._parameter_token_cache[cache_key] = allowed_ids
+
+        return allowed_ids   
     
     def _get_allowed_string_tokens(self) -> Set[int]:
         """O(1) lookup using precomputed token sets."""
         if not self._string_open:
             return self.vocab_mgr.quote_ids
         
-        allowed_ids = set(self.vocab_mgr.valid_string_body_ids)
-        allowed_ids.update(self.vocab_mgr.quote_ids)
-        return allowed_ids
+        return self.vocab_mgr.valid_string_all_ids
     
     def _get_allowed_number_tokens(self) -> Set[int]:
         """O(1) lookup using precomputed number sets."""

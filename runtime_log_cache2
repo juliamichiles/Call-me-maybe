@@ -1,0 +1,303 @@
+[after cached _encode]
+ time make run
+uv run python -m src \
+        --functions_definition data/input/functions_definition.json \
+        --input data/input/function_calling_tests.json \
+        --output data/output/function_calling_results.json
+[TIMING] VocabularyManager.__init__ vocab loading: 22030.86ms
+[TIMING.SM] _get_allowed_function_tokens: 38.17µs
+[TIMING.SM] get_allowed_token_ids total: 1269.86µs
+[TIMING.SM] _get_allowed_function_tokens: 274.65µs
+[TIMING.SM] get_allowed_token_ids total: 3508.26µs
+[TIMING.SM] _get_allowed_function_tokens: 38352.75µs
+[TIMING.SM] get_allowed_token_ids total: 38588.23µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 882.46µs
+[TIMING.SM] get_allowed_token_ids total: 986.62µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 22.89µs
+[TIMING.SM] get_allowed_token_ids total: 196.67µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.25µs
+[TIMING.SM] get_allowed_token_ids total: 89.09µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.34µs
+[TIMING.SM] get_allowed_token_ids total: 127.58µs
+[TIMING.SM] get_allowed_token_ids total: 4.15µs
+[TIMING] encode: 427.76ms | generation loop (7 tokens): 52749.89ms
+[TIMING.SM] _get_allowed_function_tokens: 13.11µs
+[TIMING.SM] get_allowed_token_ids total: 287.50µs
+[TIMING.SM] _get_allowed_function_tokens: 25.37µs
+[TIMING.SM] get_allowed_token_ids total: 185.96µs
+[TIMING.SM] _get_allowed_function_tokens: 12.16µs
+[TIMING.SM] get_allowed_token_ids total: 142.82µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 12.66µs
+[TIMING.SM] get_allowed_token_ids total: 127.11µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.31µs
+[TIMING.SM] get_allowed_token_ids total: 144.05µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 15.88µs
+[TIMING.SM] get_allowed_token_ids total: 429.81µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.78µs
+[TIMING.SM] get_allowed_token_ids total: 124.71µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.73µs
+[TIMING.SM] get_allowed_token_ids total: 77.61µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.86µs
+[TIMING.SM] get_allowed_token_ids total: 127.24µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 8.69µs
+[TIMING.SM] get_allowed_token_ids total: 133.49µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.91µs
+[TIMING.SM] get_allowed_token_ids total: 223.41µs
+[TIMING.SM] get_allowed_token_ids total: 5.98µs
+[TIMING] encode: 32.04ms | generation loop (11 tokens): 52517.50ms
+[TIMING.SM] _get_allowed_function_tokens: 13.33µs
+[TIMING.SM] get_allowed_token_ids total: 228.23µs
+[TIMING.SM] _get_allowed_function_tokens: 17.34µs
+[TIMING.SM] get_allowed_token_ids total: 129.91µs
+[TIMING.SM] _get_allowed_function_tokens: 3716.78µs
+[TIMING.SM] get_allowed_token_ids total: 3799.95µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.60µs
+[TIMING.SM] get_allowed_token_ids total: 130.35µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 4.90µs
+[TIMING.SM] get_allowed_token_ids total: 138.97µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.34µs
+[TIMING.SM] get_allowed_token_ids total: 213.58µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.50µs
+[TIMING.SM] get_allowed_token_ids total: 240.25µs
+[TIMING.SM] get_allowed_token_ids total: 7.04µs
+[TIMING] encode: 8.41ms | generation loop (7 tokens): 31922.51ms
+[TIMING.SM] _get_allowed_function_tokens: 12.69µs
+[TIMING.SM] get_allowed_token_ids total: 217.72µs
+[TIMING.SM] _get_allowed_function_tokens: 20.03µs
+[TIMING.SM] get_allowed_token_ids total: 158.04µs
+[TIMING.SM] _get_allowed_function_tokens: 12.51µs
+[TIMING.SM] get_allowed_token_ids total: 128.89µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.08µs
+[TIMING.SM] get_allowed_token_ids total: 85.44µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.97µs
+[TIMING.SM] get_allowed_token_ids total: 171.27µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.66µs
+[TIMING.SM] get_allowed_token_ids total: 119.86µs
+[TIMING.SM] get_allowed_token_ids total: 5.12µs
+[TIMING] encode: 7.67ms | generation loop (6 tokens): 27785.75ms
+[TIMING.SM] _get_allowed_function_tokens: 14.69µs
+[TIMING.SM] get_allowed_token_ids total: 317.48µs
+[TIMING.SM] _get_allowed_function_tokens: 31.78µs
+[TIMING.SM] get_allowed_token_ids total: 242.52µs
+[TIMING.SM] _get_allowed_function_tokens: 3731.37µs
+[TIMING.SM] get_allowed_token_ids total: 3820.96µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.86µs
+[TIMING.SM] get_allowed_token_ids total: 79.08µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.31µs
+[TIMING.SM] get_allowed_token_ids total: 206.73µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.12µs
+[TIMING.SM] get_allowed_token_ids total: 134.16µs
+[TIMING.SM] get_allowed_token_ids total: 5.46µs
+[TIMING] encode: 7.98ms | generation loop (6 tokens): 26938.43ms
+[TIMING.SM] _get_allowed_function_tokens: 15.64µs
+[TIMING.SM] get_allowed_token_ids total: 321.03µs
+[TIMING.SM] _get_allowed_function_tokens: 80.85µs
+[TIMING.SM] get_allowed_token_ids total: 1077.64µs
+[TIMING.SM] _get_allowed_function_tokens: 12.99µs
+[TIMING.SM] get_allowed_token_ids total: 164.21µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 27.97µs
+[TIMING.SM] get_allowed_token_ids total: 114.86µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.76µs
+[TIMING.SM] get_allowed_token_ids total: 351.38µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.47µs
+[TIMING.SM] get_allowed_token_ids total: 178.71µs
+[TIMING.SM] get_allowed_token_ids total: 4.29µs
+[TIMING] encode: 7.73ms | generation loop (6 tokens): 27936.58ms
+[TIMING.SM] _get_allowed_function_tokens: 16.67µs
+[TIMING.SM] get_allowed_token_ids total: 511.95µs
+[TIMING.SM] _get_allowed_function_tokens: 57.26µs
+[TIMING.SM] get_allowed_token_ids total: 545.80µs
+[TIMING.SM] _get_allowed_function_tokens: 9486.35µs
+[TIMING.SM] get_allowed_token_ids total: 9674.58µs
+[TIMING.SM] _get_allowed_function_tokens: 4720.43µs
+[TIMING.SM] get_allowed_token_ids total: 4815.40µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 8.62µs
+[TIMING.SM] get_allowed_token_ids total: 89.34µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.88µs
+[TIMING.SM] get_allowed_token_ids total: 143.23µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.29µs
+[TIMING.SM] get_allowed_token_ids total: 138.94µs
+[TIMING.SM] get_allowed_token_ids total: 10.33µs
+[TIMING] encode: 11.90ms | generation loop (7 tokens): 34197.62ms
+[TIMING.SM] _get_allowed_function_tokens: 24.80µs
+[TIMING.SM] get_allowed_token_ids total: 507.08µs
+[TIMING.SM] _get_allowed_function_tokens: 22.67µs
+[TIMING.SM] get_allowed_token_ids total: 162.97µs
+[TIMING.SM] _get_allowed_function_tokens: 13.36µs
+[TIMING.SM] get_allowed_token_ids total: 168.55µs
+[TIMING.SM] _get_allowed_function_tokens: 10.39µs
+[TIMING.SM] get_allowed_token_ids total: 149.13µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 252.11µs
+[TIMING.SM] get_allowed_token_ids total: 477.72µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 50.17µs
+[TIMING.SM] get_allowed_token_ids total: 160.19µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.48µs
+[TIMING.SM] get_allowed_token_ids total: 130.76µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.84µs
+[TIMING.SM] get_allowed_token_ids total: 166.71µs
+[TIMING.SM] get_allowed_token_ids total: 3.62µs
+[TIMING] encode: 22.04ms | generation loop (8 tokens): 38962.09ms
+[TIMING.SM] _get_allowed_function_tokens: 23.82µs
+[TIMING.SM] get_allowed_token_ids total: 773.83µs
+[TIMING.SM] _get_allowed_function_tokens: 20.78µs
+[TIMING.SM] get_allowed_token_ids total: 158.93µs
+[TIMING.SM] _get_allowed_function_tokens: 8070.22µs
+[TIMING.SM] get_allowed_token_ids total: 8235.23µs
+[TIMING.SM] _get_allowed_function_tokens: 2526.15µs
+[TIMING.SM] get_allowed_token_ids total: 2644.76µs
+[TIMING.SM] _get_allowed_function_tokens: 4054.22µs
+[TIMING.SM] get_allowed_token_ids total: 4140.74µs
+[TIMING.SM] _get_allowed_function_tokens: 4430.13µs
+[TIMING.SM] get_allowed_token_ids total: 4514.58µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.46µs
+[TIMING.SM] get_allowed_token_ids total: 128.09µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 67.25µs
+[TIMING.SM] get_allowed_token_ids total: 215.09µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.48µs
+[TIMING.SM] get_allowed_token_ids total: 114.52µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.08µs
+[TIMING.SM] get_allowed_token_ids total: 105.40µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.85µs
+[TIMING.SM] get_allowed_token_ids total: 183.11µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.63µs
+[TIMING.SM] get_allowed_token_ids total: 171.66µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.05µs
+[TIMING.SM] get_allowed_token_ids total: 167.47µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.39µs
+[TIMING.SM] get_allowed_token_ids total: 181.39µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 8.06µs
+[TIMING.SM] get_allowed_token_ids total: 309.83µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.73µs
+[TIMING.SM] get_allowed_token_ids total: 207.07µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.99µs
+[TIMING.SM] get_allowed_token_ids total: 221.43µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.77µs
+[TIMING.SM] get_allowed_token_ids total: 171.96µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 12.58µs
+[TIMING.SM] get_allowed_token_ids total: 231.81µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.00µs
+[TIMING.SM] get_allowed_token_ids total: 256.41µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 92.41µs
+[TIMING.SM] get_allowed_token_ids total: 188.10µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.68µs
+[TIMING.SM] get_allowed_token_ids total: 166.26µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.80µs
+[TIMING.SM] get_allowed_token_ids total: 149.25µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 4.81µs
+[TIMING.SM] get_allowed_token_ids total: 147.44µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.42µs
+[TIMING.SM] get_allowed_token_ids total: 280.94µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.96µs
+[TIMING.SM] get_allowed_token_ids total: 208.06µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.13µs
+[TIMING.SM] get_allowed_token_ids total: 142.04µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.34µs
+[TIMING.SM] get_allowed_token_ids total: 97.35µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 4.34µs
+[TIMING.SM] get_allowed_token_ids total: 120.09µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.56µs
+[TIMING.SM] get_allowed_token_ids total: 139.89µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 10.40µs
+[TIMING.SM] get_allowed_token_ids total: 185.04µs
+[TIMING.SM] get_allowed_token_ids total: 15.54µs
+[TIMING] encode: 108.50ms | generation loop (31 tokens): 160604.18ms
+[TIMING.SM] _get_allowed_function_tokens: 436.48µs
+[TIMING.SM] get_allowed_token_ids total: 943.81µs
+[TIMING.SM] _get_allowed_function_tokens: 123.11µs
+[TIMING.SM] get_allowed_token_ids total: 302.21µs
+[TIMING.SM] _get_allowed_function_tokens: 52.77µs
+[TIMING.SM] get_allowed_token_ids total: 144.96µs
+[TIMING.SM] _get_allowed_function_tokens: 16.10µs
+[TIMING.SM] get_allowed_token_ids total: 156.30µs
+[TIMING.SM] _get_allowed_function_tokens: 14.80µs
+[TIMING.SM] get_allowed_token_ids total: 149.28µs
+[TIMING.SM] _get_allowed_function_tokens: 1002.70µs
+[TIMING.SM] get_allowed_token_ids total: 1297.05µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 367.34µs
+[TIMING.SM] get_allowed_token_ids total: 1279.57µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.22µs
+[TIMING.SM] get_allowed_token_ids total: 239.66µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 8.04µs
+[TIMING.SM] get_allowed_token_ids total: 117.65µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.33µs
+[TIMING.SM] get_allowed_token_ids total: 107.53µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.40µs
+[TIMING.SM] get_allowed_token_ids total: 176.53µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 491.09µs
+[TIMING.SM] get_allowed_token_ids total: 580.68µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 8.97µs
+[TIMING.SM] get_allowed_token_ids total: 240.25µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.53µs
+[TIMING.SM] get_allowed_token_ids total: 166.43µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 209.55µs
+[TIMING.SM] get_allowed_token_ids total: 1718.15µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 15.60µs
+[TIMING.SM] get_allowed_token_ids total: 383.99µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.20µs
+[TIMING.SM] get_allowed_token_ids total: 185.89µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 4.96µs
+[TIMING.SM] get_allowed_token_ids total: 165.14µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.29µs
+[TIMING.SM] get_allowed_token_ids total: 165.43µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 4.27µs
+[TIMING.SM] get_allowed_token_ids total: 179.90µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 147.04µs
+[TIMING.SM] get_allowed_token_ids total: 472.49µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 24.28µs
+[TIMING.SM] get_allowed_token_ids total: 267.96µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.26µs
+[TIMING.SM] get_allowed_token_ids total: 274.55µs
+[TIMING.SM] get_allowed_token_ids total: 4.95µs
+[TIMING] encode: 120.38ms | generation loop (23 tokens): 139989.94ms
+[TIMING.SM] _get_allowed_function_tokens: 1861.16µs
+[TIMING.SM] get_allowed_token_ids total: 3999.60µs
+[TIMING.SM] _get_allowed_function_tokens: 677.89µs
+[TIMING.SM] get_allowed_token_ids total: 1386.54µs
+[TIMING.SM] _get_allowed_function_tokens: 800.14µs
+[TIMING.SM] get_allowed_token_ids total: 964.04µs
+[TIMING.SM] _get_allowed_function_tokens: 15.79µs
+[TIMING.SM] get_allowed_token_ids total: 136.44µs
+[TIMING.SM] _get_allowed_function_tokens: 23.39µs
+[TIMING.SM] get_allowed_token_ids total: 310.82µs
+[TIMING.SM] _get_allowed_function_tokens: 32.40µs
+[TIMING.SM] get_allowed_token_ids total: 221.70µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 80.03µs
+[TIMING.SM] get_allowed_token_ids total: 179.39µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 41.99µs
+[TIMING.SM] get_allowed_token_ids total: 238.17µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 13.84µs
+[TIMING.SM] get_allowed_token_ids total: 910.91µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.04µs
+[TIMING.SM] get_allowed_token_ids total: 149.80µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 14.47µs
+[TIMING.SM] get_allowed_token_ids total: 259.57µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.32µs
+[TIMING.SM] get_allowed_token_ids total: 99.05µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 5.19µs
+[TIMING.SM] get_allowed_token_ids total: 129.72µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 13.00µs
+[TIMING.SM] get_allowed_token_ids total: 330.60µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.46µs
+[TIMING.SM] get_allowed_token_ids total: 250.03µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 11.21µs
+[TIMING.SM] get_allowed_token_ids total: 185.07µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 6.68µs
+[TIMING.SM] get_allowed_token_ids total: 256.04µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 113.98µs
+[TIMING.SM] get_allowed_token_ids total: 190.18µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.05µs
+[TIMING.SM] get_allowed_token_ids total: 174.43µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 13.33µs
+[TIMING.SM] get_allowed_token_ids total: 246.01µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 9.21µs
+[TIMING.SM] get_allowed_token_ids total: 156.01µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 4.34µs
+[TIMING.SM] get_allowed_token_ids total: 141.92µs
+[TIMING.SM] _get_allowed_parameter_value_tokens: 7.71µs
+[TIMING.SM] get_allowed_token_ids total: 135.78µs
+[TIMING.SM] get_allowed_token_ids total: 4.54µs
+[TIMING] encode: 440.79ms | generation loop (23 tokens): 132712.16ms
+
+real    13m6.077s
+user    64m9.378s
+sys     2m27.532s

@@ -1,4 +1,4 @@
-from typing import Dict, DefaultDict, Set
+from typing import Dict, DefaultDict, Set, Tuple
 import json
 from collections import defaultdict
 import time
@@ -17,6 +17,8 @@ class VocabularyManager:
         self.id_to_token: Dict[int, str] = {} 
         self.token_to_id: DefaultDict[str, Set[int]] = defaultdict(set)
         self.trie = VocabularyTrie()
+
+        self._prefix_cache: Dict[str, Set[int]] = {}
         
         # Pre computed token classification sets
         self.quote_ids: Set[int] = set()
@@ -94,5 +96,17 @@ class VocabularyManager:
         self.valid_string_all_ids = self.quote_ids | self.valid_string_body_ids
 
     def token_ids_that_prefix(self, text: str) -> Set[int]:
-        """Return token IDs whose complete token string is a prefix of text."""
-        return self.trie.get_token_ids_that_prefix(text)
+        """Return token IDs whose complete token string is a prefix of text.
+
+            Results are cached because the same prefixes are queried repeatedly
+            during constrained generation.
+        """
+
+        cached = self._prefix_cache.get(text)
+        if cached is not None:
+            return cached
+
+        token_ids = self.trie.get_token_ids_that_prefix(text)
+        self._prefix_cache[text] = token_ids
+        
+        return token_ids
