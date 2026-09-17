@@ -231,9 +231,7 @@ class JSONStateMachine:
         if not self._string_open:
             return self.vocab_mgr.quote_ids
         
-        allowed_ids = set(self.vocab_mgr.valid_string_body_ids)
-        allowed_ids.update(self.vocab_mgr.quote_ids)
-        return allowed_ids
+        return self.vocab_mgr.valid_string_all_ids
     
     def _get_allowed_number_tokens(self) -> Set[int]:
         """O(1) lookup using precomputed number sets."""
