@@ -1,9 +1,9 @@
 from enum import Enum, auto
 import enum
-from os import remove
+# from os import remove
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Set, Optional
 from collections import deque
-import time
+# import time
 # from typing_extensions import TypeVarTuple
 
 from .vocabulary import VocabularyManager
@@ -154,7 +154,7 @@ class JSONStateMachine:
         """Resolves all deterministic transitions and returns valid token IDs for 
             LLM states.
         """
-        t_start = time.perf_counter()
+        # t_start = time.perf_counter()
         while True:
             det_tokens = self.advance_deterministic()
             if det_tokens is None:
@@ -166,33 +166,30 @@ class JSONStateMachine:
         allowed_ids: Set[int] = set()
         
         if self.current_state == State.SELECT_FUNCTION:
-            t_fn_start = time.perf_counter()
+            # t_fn_start = time.perf_counter()
             allowed_ids = self._get_allowed_function_tokens()
-            t_fn_end = time.perf_counter()
-            import sys
-            print(
-                    "[TIMING.SM] _get_allowed_function_tokens: "
-                    f"{(t_fn_end - t_fn_start)*1000000:.2f}µs",
-                    file=sys.stderr
-            )
+            # t_fn_end = time.perf_counter()
+            # print(
+            #         "[TIMING.SM] _get_allowed_function_tokens: "
+            #         f"{(t_fn_end - t_fn_start)*1000000:.2f}µs",
+            #         file=sys.stderr
+            # )
             
         elif self.current_state == State.SELECT_PARAMETER_VALUE:
-            t_param_start = time.perf_counter()
+            # t_param_start = time.perf_counter()
             allowed_ids = self._get_allowed_parameter_value_tokens()
-            t_param_end = time.perf_counter()
-            import sys
-            print(
-                    "[TIMING.SM] _get_allowed_parameter_value_tokens: "
-                    f"{(t_param_end - t_param_start)*1000000:.2f}µs", 
-                    file=sys.stderr
-            )
-        t_end = time.perf_counter()
-        import sys
-        print(
-                "[TIMING.SM] get_allowed_token_ids total: "
-                f"{(t_end - t_start)*1000000:.2f}µs", 
-                file=sys.stderr
-        )
+            # t_param_end = time.perf_counter()
+            # print(
+            #         "[TIMING.SM] _get_allowed_parameter_value_tokens: "
+            #         f"{(t_param_end - t_param_start)*1000000:.2f}µs", 
+            #         file=sys.stderr
+            # )
+        # t_end = time.perf_counter()
+        # print(
+        #         "[TIMING.SM] get_allowed_token_ids total: "
+        #         f"{(t_end - t_start)*1000000:.2f}µs", 
+        #         file=sys.stderr
+        # )
         return allowed_ids
     
     def _get_allowed_function_tokens(self) -> Set[int]:

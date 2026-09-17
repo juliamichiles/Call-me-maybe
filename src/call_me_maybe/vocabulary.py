@@ -1,7 +1,7 @@
 from typing import Dict, DefaultDict, Set
 import json
 from collections import defaultdict
-import time
+# import time
 # from functools import lru_cache
 
 from .trie import VocabularyTrie
@@ -12,7 +12,7 @@ class VocabularyManager:
 
     def __init__(self, vocab_file_path: str) -> None:
         """Load vocabulary from file."""
-        t_start = time.perf_counter()
+        # t_start = time.perf_counter()
         self.vocab_path = vocab_file_path
         self.id_to_token: Dict[int, str] = {} 
         self.token_to_id: DefaultDict[str, Set[int]] = defaultdict(set)
@@ -28,13 +28,13 @@ class VocabularyManager:
         self.delimiter_ids: Set[int] = set()
 
         self._load_and_build()
-        t_end = time.perf_counter()
-        import sys
-        print(
-                "[TIMING] VocabularyManager.__init__ vocab loading: "
-                f"{(t_end - t_start)*1000:.2f}ms",
-                file=sys.stderr
-        )
+        # t_end = time.perf_counter()
+        # import sys
+        # print(
+        #         "[TIMING] VocabularyManager.__init__ vocab loading: "
+        #         f"{(t_end - t_start)*1000:.2f}ms",
+        #         file=sys.stderr
+        # )
 
     # @lru_cache(maxsize=4096)
     # def tokens_for_prefix(self, prefix: str) -> tuple[int, ...]:

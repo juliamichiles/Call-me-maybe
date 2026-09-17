@@ -1,6 +1,6 @@
 import json
 from typing import List, Dict, Any, Set, TYPE_CHECKING
-import time
+# import time
 import numpy as np
 
 
@@ -35,30 +35,25 @@ class Generation:
         self.functions = functions
 
     def _format_prompt(self, user_input: str) -> str:
+        
+        # system_guide = (
+        #         "You are a function-calling assistant.\n"
+        #         "Choose exactly one function that best matches the user's request "
+        #         "and provide its arguments.\n"
+        #         "Use values from the user's request whenever possible. "
+        #         "Do not invent values or numbers. "
+        #         "Arguments must match the function's defined types.\n\n"
+        #         "Output format:\n"
+        #         "{\"name\": \"function_name\", "
+        #         "\"parameters\": {\"argument\": value}}\n\n"
+        #         "Available functions:\n"
+        # )
+        
         system_guide = (
-                "You are a strictly-compliant JSON assistant.\n"
-                "You must answer the user's request by calling exactly one"
-                " function from the list below. Output must be valid JSON with"
-                " keys: \"name\" and \"parameters\".\n\n"
-                "IMPORTANT: For each function parameter, infer the value from " 
-                "the user's request. Use values explicitly provided by the user "
-                "whenever possible. Do not invent values that are not supported"
-                "by the user's request. Do not invent numbers.\n"
-                "If a string contains quotes, escape them"
-                " (e.g. \\\"hello\\\").\n\n"
-                "Examples (Input -> Assistant JSON):\n"
-                "User Request: What is the square root of 16?\n"
-                "Assistant Response: "
-                "{\"name\": \"fn_get_square_root\", \"parameters\": "
-                "{\"a\": 16}}\n\n"
-                "User Request: What is the sum of 2 and 3?\n"
-                "Assistant Response: "
-                "{\"name\": \"fn_add_numbers\", \"parameters\": "
-                "{\"a\": 2, \"b\": 3}}\n\n"
-                "User Request: Greet \"John\" please\n"
-                "Assistant Response: " 
-                "{\"name\": \"fn_greet\", \"parameters\": {\"name\":"
-                " \"John\"}}\n\n"
+                "Choose exactly one function that best matches the user's request. "
+                "Extract its arguments from the request. "
+                "Do not invent values or numbers. "
+                "Use the types defined by the function.\n\n"
                 "Available functions:\n"
         )
         function_lines = []
@@ -89,9 +84,9 @@ class Generation:
         """
 
         formated_prompt = self._format_prompt(prompt_txt)
-        t_encode_start = time.perf_counter()
+        # t_encode_start = time.perf_counter()
         input_ids: List[int] = model.encode(formated_prompt).tolist()[0]
-        t_encode_end = time.perf_counter()
+        # t_encode_end = time.perf_counter()
         
         state_machine = JSONStateMachine(
                 prompt_txt,
@@ -101,7 +96,7 @@ class Generation:
         ) 
         # print(f"DEBUG: max_tokens: {max_tokens}")
         
-        t_gen_start = time.perf_counter()
+        # t_gen_start = time.perf_counter()
         token_count = 0
 
         for _ in range(max_tokens):
@@ -135,13 +130,12 @@ class Generation:
             # print("DEBUG: candidate_allowed_count:", len(allowed_ids))
             state_machine.update(next_token)
             input_ids.append(next_token)
-        t_gen_end = time.perf_counter()
-        import sys
-        print(
-                f"[TIMING] encode: {(t_encode_end - t_encode_start)*1000:.2f}ms"
-                f" | generation loop ({token_count} tokens):"
-                f" {(t_gen_end - t_gen_start)*1000:.2f}ms", file=sys.stderr
-        )
+        # t_gen_end = time.perf_counter()
+        # print(
+        #         f"[TIMING] encode: {(t_encode_end - t_encode_start)*1000:.2f}ms"
+        #         f" | generation loop ({token_count} tokens):"
+        #         f" {(t_gen_end - t_gen_start)*1000:.2f}ms", file=sys.stderr
+        # )
             # print(f"DEBUG: sm_buffer={state_machine.buffer}")
         try:
             parsed_output = json.loads(state_machine.buffer)
