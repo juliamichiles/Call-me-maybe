@@ -30,7 +30,11 @@ def main() -> None:
             default="data/output/function_calling_results.json",
             help="Path to output results JSON file",
     )
-
+    parser.add_argument(
+        "--visualize",
+        action="store_true",
+        help="Show the live constrained-decoding dashboard",
+    )
     args = parser.parse_args()
 
     try:
@@ -41,15 +45,8 @@ def main() -> None:
         model = Small_LLM_Model()
         vocab_path = model.get_path_to_vocab_file()
         vocab_mgr = VocabularyManager(vocab_path)
-        try:
-            VocabularyManager.tokens_for_prefix.cache_clear()
-        except Exception:
-            try:
-                vocab_mgr.tokens_for_prefix.cache_clear()
-            except Exception:
-                pass
         
-        generator = Generation(functions) # acho, antes n recebia nada
+        generator = Generation(functions, visualize=args.visualize)
         results = []
 
         for prompt_obj in prompts:

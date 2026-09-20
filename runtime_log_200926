@@ -1,0 +1,135 @@
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 7
+1. Prompt Encoding     : 0.1585 seconds
+2. SM Check Allowed Ids: 0.0060 seconds
+3. LLM Logits Fetch    : 23.1479 seconds
+4. Next Token Select   : 0.0799 seconds
+5. SM State Update     : 0.0624 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 11
+1. Prompt Encoding     : 0.0429 seconds
+2. SM Check Allowed Ids: 0.0013 seconds
+3. LLM Logits Fetch    : 29.4413 seconds
+4. Next Token Select   : 0.0731 seconds
+5. SM State Update     : 0.0485 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 7
+1. Prompt Encoding     : 0.0329 seconds
+2. SM Check Allowed Ids: 0.0047 seconds
+3. LLM Logits Fetch    : 16.4746 seconds
+4. Next Token Select   : 0.3972 seconds
+5. SM State Update     : 0.0240 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 6
+1. Prompt Encoding     : 0.0133 seconds
+2. SM Check Allowed Ids: 0.0003 seconds
+3. LLM Logits Fetch    : 13.5219 seconds
+4. Next Token Select   : 0.0589 seconds
+5. SM State Update     : 0.0067 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 6
+1. Prompt Encoding     : 0.0473 seconds
+2. SM Check Allowed Ids: 0.0039 seconds
+3. LLM Logits Fetch    : 14.4125 seconds
+4. Next Token Select   : 0.0614 seconds
+5. SM State Update     : 0.0126 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 6
+1. Prompt Encoding     : 0.0154 seconds
+2. SM Check Allowed Ids: 0.0003 seconds
+3. LLM Logits Fetch    : 17.1184 seconds
+4. Next Token Select   : 0.2061 seconds
+5. SM State Update     : 0.0168 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 7
+1. Prompt Encoding     : 0.0975 seconds
+2. SM Check Allowed Ids: 0.0147 seconds
+3. LLM Logits Fetch    : 16.7369 seconds
+4. Next Token Select   : 0.0360 seconds
+5. SM State Update     : 0.0075 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 8
+1. Prompt Encoding     : 0.0037 seconds
+2. SM Check Allowed Ids: 0.0003 seconds
+3. LLM Logits Fetch    : 20.9231 seconds
+4. Next Token Select   : 0.0606 seconds
+5. SM State Update     : 0.0212 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 31
+1. Prompt Encoding     : 0.0411 seconds
+2. SM Check Allowed Ids: 0.0129 seconds
+3. LLM Logits Fetch    : 79.2206 seconds
+4. Next Token Select   : 0.5112 seconds
+5. SM State Update     : 0.1567 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 23
+1. Prompt Encoding     : 0.0364 seconds
+2. SM Check Allowed Ids: 0.0034 seconds
+3. LLM Logits Fetch    : 63.1237 seconds
+4. Next Token Select   : 0.3746 seconds
+5. SM State Update     : 0.0221 seconds
+==================================================
+
+
+==================================================
+          PIPELINE PROFILING REPORT
+==================================================
+Total Tokens Generated : 23
+1. Prompt Encoding     : 0.0287 seconds
+2. SM Check Allowed Ids: 0.0009 seconds
+3. LLM Logits Fetch    : 53.1271 seconds
+4. Next Token Select   : 0.3194 seconds
+5. SM State Update     : 0.0554 seconds
+==================================================
+
+
+real    6m31.259s
+user    31m20.592s
+sys     1m12.417s

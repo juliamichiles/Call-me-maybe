@@ -6,12 +6,24 @@
     - see possible_solution.md
 
 ## Next:
-- [ ] Import time and inspect where are the most expensive parts 
-- [ ] check how debug prints actually impact run time 
-- [ ] implement simple time-cheap visualization
 - [ ] add more try/except blocks + add them on imports (for pydantic and other external stuff)
+- [ ] maybe remove from pipeline the line with a "maybe remove" comment, because
+    apparently it works just fine without it and it added like 40s to runtime
+- [ ] visualization has issues:
+    - [ ] its printing some invalid tokens I don't even know were they're comming
+        from, bc output file is normal and valid
+    - [ ] Last token section blinks, I don't like its
+    - [ ] I don't like the yellow shade for contraints
+    - [ ] I'm not sure I like this visualization at all actually
+    - [ ] make text pink always, regarding of terminal colors
+    - [ ] add timings for visualization (what we were printing earlier)
+- [ ] run this on 42's pc bc apparently WSL-Ubuntu is slowing the program down 
+- [ ] somehow make the Makefile handle flags
 
 ## Fixed:
+- [X] Import time and inspect where are the most expensive parts 
+- [X] check how debug prints actually impact run time 
+- [X] implement simple time-cheap visualization
 - [X] Stopped hallucinating numbers, but its still generating malformed JSON
 - [X] Not handling getting parameters from LLM well
 - [X] Now hallucinates numbers endlessly...
