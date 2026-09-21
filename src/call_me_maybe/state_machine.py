@@ -373,3 +373,8 @@ class JSONStateMachine:
             True if state machine is in END state, False otherwise.
         """
         return self.current_state == State.END
+
+    @property
+    def get_full_buffer(self) -> str:
+        """Returns the current accumulated JSON buffer string."""
+        return self.buffer + self.param_value_buffer

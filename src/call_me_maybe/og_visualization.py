@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence, Set
+from typing import Any, List, Optional, Sequence, Set
 
+from .state_machine import JSONStateMachine
 from .errors import CallMeError
 
 try:
@@ -11,10 +12,7 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
       raise CallMeError(e)
 
-if TYPE_CHECKING:
-    from .state_machine import JSONStateMachine
-
-
+# TODO: Add if TYPE_CHECKING here
 class GenVisualizer:
     """Display the constrained-decoding process using Rich."""
     def __init__(
@@ -29,13 +27,13 @@ class GenVisualizer:
 
         self.generated_tokens: List[str] = []
         self.generated_ids: List[int] = []
-        self.current_buffer = ""
         self.allowed_count = 0
         self.current_token: Optional[str] = None
         self.current_token_id: Optional[int] = None
         self.current_state = "INITIALIZING"
         self.status = "Starting generation..."
         self.selected_function = ""
+        self.current_buffer = ""
         self.current_parameter = ""
         self.current_parameter_type = ""
         self.completed = False
@@ -48,7 +46,7 @@ class GenVisualizer:
     def start(self) -> None:
         """Start the live Rich dashboard."""
         self.live.start()
-
+    
     def stop(self) -> None:
         """Stop the live Rich dashboard."""
         self.live.stop()
@@ -56,13 +54,13 @@ class GenVisualizer:
     def update_constraints(
             self,
             allowed_ids: Set[int],
-            state_machine: "JSONStateMachine"
+            state_machine: JSONStateMachine
             ) -> None:
         """Update information about the current constraints."""
+        # FIXME: Rename to just update or update_info somethink like that
         self.allowed_count = len(allowed_ids)
         self.current_state = state_machine.current_state.name
         self.current_buffer = state_machine.get_full_buffer
-
         if state_machine.selected_function:
             self.selected_function = state_machine.selected_function.name
         else:
@@ -95,7 +93,6 @@ class GenVisualizer:
         self.generated_tokens.append(token_text)
         if state_machine:
             self.current_buffer = state_machine.get_full_buffer
-
         if deterministic:
             self.status = "Deterministic token emitted"
         else:
@@ -104,7 +101,7 @@ class GenVisualizer:
 
     def finish(
             self,
-            state_machine: "JSONStateMachine",
+            state_machine: JSONStateMachine,
     ) -> None:
         """Mark generation as complete."""
         self.completed = True
@@ -116,7 +113,7 @@ class GenVisualizer:
     def _refresh(self) -> None:
         """Refresh the live dashboard."""
         self.live.update(self._render())
-
+    
     def _render(self) -> Group:
         """Build the complete dashboard."""
 
@@ -149,7 +146,7 @@ class GenVisualizer:
 
     def _render_generation(self) -> Panel:
         """Render the generated JSON."""
-        output = self.current_buffer
+        output = "".join(self.generated_tokens)
         table = Table.grid(expand=True)
         table.add_column(ratio=1)
         table.add_column(justify="right", style="dim")
@@ -197,13 +194,13 @@ class GenVisualizer:
             percentage = 0.0
 
         table.add_row("Allowed %", f"{percentage:.4f}%")
-
+        
         return Panel(
                 table,
                 title="constraints",
                 border_style="yellow"
         )
-
+    
     def _render_last_token(self) -> Panel:
         """Render information about the latest token."""
         table = Table.grid(expand=True)

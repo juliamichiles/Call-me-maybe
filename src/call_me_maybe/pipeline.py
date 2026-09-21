@@ -1,7 +1,6 @@
+from typing import List, Dict, Any, Set, Optional, TYPE_CHECKING
 import json
 import time
-from typing import List, Dict, Any, Set, TYPE_CHECKING
-import numpy as np
 
 
 from .schemas import FunctionDefinition
@@ -9,7 +8,11 @@ from .state_machine import JSONStateMachine
 from .vocabulary import VocabularyManager
 from .errors import CallMeError
 from .visualization import GenVisualizer
-# from src.call_me_maybe import state_machine
+
+try:
+    import numpy as np
+except (ImportError, ModuleNotFoundError) as e:
+    raise CallMeError(e)
 
 if TYPE_CHECKING:
     from llm_sdk import Small_LLM_Model
@@ -59,33 +62,7 @@ class Generation:
             f"Request: {user_input}\n"
             "Response:\n"
         )
- 
-
- 
-    # def _format_prompt(self, user_input: str) -> str:
-    #     system_guide = (
-    #             "Choose exactly one function that best matches the user's "
-    #             "request. Extract its arguments from the request. "
-    #             "Do not invent values or numbers. "
-    #             "Use the types defined by the function.\n\n"
-    #             "Available functions:\n"
-    #     )
-    #     function_lines = []
-
-    #     for fn in self.functions:
-    #         params = []
-    #         for p_name, p_def in fn.parameters.items():
-    #             params.append(f"{p_name}: {p_def.type}")
-    #         params = ", ".join(params)
-    #         function_lines.append(f"- {fn.name}({params}): {fn.description}")
-    #     functions_str = "\n".join(function_lines)
-
-    #     full_prompt = (
-    #             f"{system_guide}{functions_str}\n\n"
-    #             f"User Request: {user_input}\nAssistant Response:\n"
-    #     )
-    #     return full_prompt
-
+    
     def gen_function_call(
             self,
             model: "Small_LLM_Model",
@@ -104,7 +81,7 @@ class Generation:
         t_total_select = 0.0
         
         formated_prompt = self._format_prompt(prompt_txt)
-        visualizer: Optional[GenerationVisualizer] = None
+        visualizer: Optional[GenVisualizer] = None
         if self.visualize:
             visualizer = GenVisualizer(
                     promt=prompt_txt,
@@ -127,30 +104,30 @@ class Generation:
             token_count = 0
 
             for _ in range(max_tokens):
-                
+
                 t_sm0 = time.perf_counter()
                 allowed_ids = state_machine.get_allowed_token_ids()
                 t_total_sm_allow += time.perf_counter() - t_sm0
-                
+
                 if visualizer:
                     visualizer.update_constraints(allowed_ids, state_machine)
+
                 if state_machine.deterministic_token_ids:
                     deterministic_ids = (
                             state_machine.deterministic_token_ids.copy()
                     )
-                    state_machine.deterministic_token_ids.clear() 
-                    # Maybe actually remove the line bellow, bc it was
-                    # working without it and faster
-                    input_ids.extend(state_machine.deterministic_token_ids)
+                    state_machine.deterministic_token_ids.clear()
+
                     for token_id in deterministic_ids:
                         token_text = vocab_mgr.id_to_token[token_id]
                         input_ids.append(token_id)
                         if visualizer:
                             visualizer.update_token(
-                            token_id,
-                            token_text,
-                            deterministic=True,
-                        )
+                                token_id,
+                                token_text,
+                                state_machine,
+                                deterministic=True,
+                            )
 
                 if state_machine.is_complete():
                     if visualizer:
@@ -168,7 +145,7 @@ class Generation:
                 t_total_select += time.perf_counter() - t_sel0
                 token_text = vocab_mgr.id_to_token[next_token]
                 token_count += 1
-                 
+
                 t_sm1 = time.perf_counter()
                 state_machine.update(next_token)
                 t_total_sm_update += time.perf_counter() - t_sm1
@@ -177,6 +154,7 @@ class Generation:
                     visualizer.update_token(
                             next_token,
                             token_text,
+                            state_machine,
                             deterministic=False
                     )
             else:
