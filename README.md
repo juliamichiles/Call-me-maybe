@@ -1,3 +1,6 @@
+_This project has been created as part of the 42 curriculum by juliatav_
+
+![visualization](assets/visualization.png)
 
 uses Coalescing optimization to enhence performance
 

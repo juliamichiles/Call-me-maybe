@@ -6,21 +6,27 @@
     - see possible_solution.md
 
 ## Next:
+- [ ] more tests with more files
 - [ ] add more try/except blocks + add them on imports (for pydantic and other external stuff)
-- [ ] maybe remove from pipeline the line with a "maybe remove" comment, because
-    apparently it works just fine without it and it added like 40s to runtime
+- [ ] pipeline is big and messy, maybe there's some redundant stuff, check it!
 - [ ] visualization has issues:
-    - [ ] its printing some invalid tokens I don't even know were they're comming
-        from, bc output file is normal and valid
     - [ ] Last token section blinks, I don't like its
-    - [ ] I don't like the yellow shade for contraints
-    - [ ] I'm not sure I like this visualization at all actually
     - [ ] make text pink always, regarding of terminal colors
-    - [ ] add timings for visualization (what we were printing earlier)
+    - [ ] I'm not sure math/stats is actually correct
+    - [ ] Add a "final graph" with performance profiling for the whole process
 - [ ] run this on 42's pc bc apparently WSL-Ubuntu is slowing the program down 
 - [ ] somehow make the Makefile handle flags
+- [ ] linters
+- [ ] clean files, remove unused stuff
+- [ ] README
 
 ## Fixed:
+- [X] visualization:
+    - [X] its printing some invalid tokens I don't even know were they're comming
+        from, bc output file is normal and valid
+    - [X] I don't like the yellow shade for contraints
+    - [X] I'm not sure I like this visualization at all actually
+    - [X] add time report        
 - [X] Import time and inspect where are the most expensive parts 
 - [X] check how debug prints actually impact run time 
 - [X] implement simple time-cheap visualization

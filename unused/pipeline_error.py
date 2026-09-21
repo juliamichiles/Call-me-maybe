@@ -28,11 +28,11 @@ def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:
         )
 
     logits_arr = np.array(logits, dtype=np.float32)
-    constrained_logits = np.full_like(logits_arr, -np.inf)
+    contrained_logits = np.full_like(logits_arr, -np.inf)
 
     valid_indices = list(allowed_ids)
-    constrained_logits[valid_indices] = logits_arr[valid_indices]
-    return int(np.argmax(constrained_logits))
+    contrained_logits[valid_indices] = logits_arr[valid_indices]
+    return int(np.argmax(contrained_logits))
 
 
 class Generation:
@@ -81,12 +81,12 @@ class Generation:
         t_total_sm_update = 0.0
         t_total_select = 0.0
         
-        formatted_prompt = self._format_prompt(prompt_txt)
+        formated_prompt = self._format_prompt(prompt_txt)
         visualizer: Optional[GenVisualizer] = None
         
         if self.visualize:
             visualizer = GenVisualizer(
-                    prompt=prompt_txt,
+                    promt=prompt_txt,
                     max_tokens=max_tokens,
                     vocab_size=len(vocab_mgr.id_to_token)
             )
@@ -94,7 +94,7 @@ class Generation:
         
         try:
             t_start_encode = time.perf_counter()
-            input_ids: List[int] = model.encode(formatted_prompt).tolist()[0]
+            input_ids: List[int] = model.encode(formated_prompt).tolist()[0]
             t_total_encode += time.perf_counter() - t_start_encode
 
             state_machine = JSONStateMachine(
@@ -125,9 +125,9 @@ class Generation:
                     for token_id in deterministic_ids:
                         token_text = vocab_mgr.id_to_token[token_id]
                         input_ids.append(token_id)
-                        token_count += 1 
-
+                        
                         t_sm1 = time.perf_counter()
+                        state_machine.update(token_id)
                         t_total_sm_update += time.perf_counter() - t_sm1
 
                         if visualizer:

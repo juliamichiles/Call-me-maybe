@@ -26,5 +26,6 @@
 15.09.26 - 3h15 - fixed regex infinite loop and malformed strings
 16.09.26 - 2h00 - trying to reduce runtime
 17.09.26 - 6h00 - trying to reduce runtime + implemented cached version
-18.08.26 - 3h25 - trying to reduce runtime
-19.08.26 - 5h45 - investigating runtime issues + implemented visualization
+18.09.26 - 3h25 - trying to reduce runtime
+20.09.26 - 5h45 - investigating runtime issues + implemented visualization
+21.09.26 - 3h15 - fixing visualization + added performance profiling
