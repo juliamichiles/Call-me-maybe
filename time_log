@@ -29,3 +29,4 @@
 18.09.26 - 3h25 - trying to reduce runtime
 20.09.26 - 5h45 - investigating runtime issues + implemented visualization
 21.09.26 - 3h15 - fixing visualization + added performance profiling
+22.09.26 - 2h20 - added more test files + started cleaning files/linters

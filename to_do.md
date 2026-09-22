@@ -7,6 +7,8 @@
 
 ## Next:
 - [ ] more tests with more files
+    - [ ] add some invalid files
+- [ ] make system prompt slightly bigger/more robust
 - [ ] add more try/except blocks + add them on imports (for pydantic and other external stuff)
 - [ ] pipeline is big and messy, maybe there's some redundant stuff, check it!
 - [ ] visualization has issues:

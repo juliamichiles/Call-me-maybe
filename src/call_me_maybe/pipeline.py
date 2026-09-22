@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:
-    """Masks unallowed logits with negative infinity and returns the top 
+    """Masks unallowed logits with negative infinity and returns the top
         token ID.
     """
     if not allowed_ids:
@@ -37,17 +37,17 @@ def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:
 
 class Generation:
     def __init__(
-            self, 
+            self,
             functions: List[FunctionDefinition],
             visualize: bool=False) -> None:
-        
+
         self.functions = functions
-        self.visualize = visualize 
-    
+        self.visualize = visualize
+
     def _format_prompt(self, user_input: str) -> str:
         # FIXME: Make this less ugly
         system_guide = (
-            "Select one matching function and extract arguments using defined" 
+            "Select one matching function and extract arguments using defined"
             " types.\nFunctions:\n"
         )
 
@@ -64,7 +64,7 @@ class Generation:
             f"Request: {user_input}\n"
             "Response:\n"
         )
-    
+
     def gen_function_call(
             self,
             model: "Small_LLM_Model",
@@ -80,10 +80,10 @@ class Generation:
         t_total_sm_allow = 0.0
         t_total_sm_update = 0.0
         t_total_select = 0.0
-        
+
         formatted_prompt = self._format_prompt(prompt_txt)
         visualizer: Optional[GenVisualizer] = None
-        
+
         if self.visualize:
             visualizer = GenVisualizer(
                     prompt=prompt_txt,
@@ -91,7 +91,7 @@ class Generation:
                     vocab_size=len(vocab_mgr.id_to_token)
             )
             visualizer.start()
-        
+
         try:
             t_start_encode = time.perf_counter()
             input_ids: List[int] = model.encode(formatted_prompt).tolist()[0]
@@ -125,7 +125,7 @@ class Generation:
                     for token_id in deterministic_ids:
                         token_text = vocab_mgr.id_to_token[token_id]
                         input_ids.append(token_id)
-                        token_count += 1 
+                        token_count += 1
 
                         t_sm1 = time.perf_counter()
                         t_total_sm_update += time.perf_counter() - t_sm1
@@ -164,7 +164,7 @@ class Generation:
                 t_sel0 = time.perf_counter()
                 next_token = select_next_token(logits, allowed_ids)
                 t_total_select += time.perf_counter() - t_sel0
-                
+
                 token_text = vocab_mgr.id_to_token[next_token]
                 token_count += 1
 
@@ -172,7 +172,7 @@ class Generation:
                 state_machine.update(next_token)
                 t_total_sm_update += time.perf_counter() - t_sm1
                 input_ids.append(next_token)
-                
+
                 if visualizer:
                     visualizer.update_profiling({
                         "Encoding": t_total_encode,
@@ -193,7 +193,7 @@ class Generation:
         finally:
             if visualizer:
                 visualizer.stop()
-            
+
         # --- PRINT PROFILING REPORT ---
         # print("\n" + "="*50)
         # print("          PIPELINE PROFILING REPORT")

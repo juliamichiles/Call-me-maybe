@@ -3,10 +3,11 @@ from typing import Dict, Any, Optional
 from src.call_me_maybe.errors import CallMeError
 try:
     from pydantic import BaseModel
-except ImportError as e:  # add more errors 
-    raise CallMeError(e) 
+except ImportError as e:  # add more errors
+    raise CallMeError(e)
 # FIXME: Rename type to p_type
 # FIXME: Remove unused models
+
 
 class ParameterProperty(BaseModel):
     type: str

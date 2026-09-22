@@ -14,7 +14,7 @@ class VocabularyTrie:
 
     def insert(self, token_str: str, token_id: int) -> None:
         """Inserts a token string and its ID into the Trie."""
-        
+
         current = self.root
         current.token_ids.add(token_id)
 
@@ -28,7 +28,7 @@ class VocabularyTrie:
         current.terminal_token_ids.add(token_id)
 
     def get_tokens_for_prefix(self, prefix: str) -> Set[int]:
-        """Returns all token IDs whose string representations start with 
+        """Returns all token IDs whose string representations start with
                 the prefix.
         """
         current = self.root
@@ -37,7 +37,7 @@ class VocabularyTrie:
                 return set()
             current = current.children[char]
         return current.token_ids
-    
+
     def get_token_ids_that_prefix(self, text: str) -> Set[int]:
         """Return token IDs whose complete token string is a prefix of text.
         """

@@ -14,10 +14,10 @@ class VocabularyManager:
         """Load vocabulary from file."""
         # t_start = time.perf_counter()
         self.vocab_path = vocab_file_path
-        self.id_to_token: Dict[int, str] = {} 
+        self.id_to_token: Dict[int, str] = {}
         self.token_to_id: DefaultDict[str, Set[int]] = defaultdict(set)
         self.trie = VocabularyTrie()
-        
+
         # Pre computed token classification sets
         self.quote_ids: Set[int] = set()
         self.valid_string_body_ids: Set[int] = set()

@@ -39,7 +39,7 @@ class GenVisualizer:
         self.current_parameter = ""
         self.current_parameter_type = ""
         self.completed = False
-        
+
         self.timings: Dict[str, float] = {}
 
         self.live = Live(
@@ -47,7 +47,7 @@ class GenVisualizer:
                 refresh_per_second=10,
                 transient=False
         )
-    
+
     def start(self) -> None:
         """Start the live Rich dashboard."""
         self.live.start()
@@ -127,13 +127,13 @@ class GenVisualizer:
 
     def _render(self) -> Group:
         """Build the complete dashboard."""
-        
+
         # three smaller panels side-by-side using a grid
         bottom_grid = Table.grid(expand=True, padding=(0, 1))
         bottom_grid.add_column(ratio=1) # 25% width
         bottom_grid.add_column(ratio=1) # 25% width
         bottom_grid.add_column(ratio=2) # 50% width for the charts
-        
+
         bottom_grid.add_row(
             self._render_constraints(),
             self._render_last_token(),
@@ -243,12 +243,12 @@ class GenVisualizer:
         table.add_column(style="bold")
         table.add_column(justify="right")
         table.add_column(justify="left")
-        
+
         if not self.timings:
             table.add_row("Waiting for data...", "", "")
             return Panel(
-                    table, 
-                    title="Performance", 
+                    table,
+                    title="Performance",
                     border_style="bright_magenta"
             )
 
@@ -262,7 +262,7 @@ class GenVisualizer:
                 "Select": "bright_cyan",
                 "SM Update": "bright_green"
         }
-        
+
         for process, t in self.timings.items():
             pct = t/ total_time
             bar_len = 12
@@ -276,14 +276,14 @@ class GenVisualizer:
             )
         table.add_row("", "", "")
         tokens = len(self.generated_tokens)
-        tps = tokens / total_time if total_time > 0 else 0 
+        tps = tokens / total_time if total_time > 0 else 0
         table.add_row(
             Text("Total Time", style="bold white"),
             Text(f"{total_time:.3f}s", style="bold white"),
             Text(f"  Speed: {tps:.1f} tok/s", style="bold dim")
         )
         return Panel(
-                table, 
-                title="Performance Profiling", 
+                table,
+                title="Performance Profiling",
                 border_style="bright_magenta"
         )
