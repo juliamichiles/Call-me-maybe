@@ -1,0 +1,38 @@
+[
+  {
+    "name": "fn_create_user",
+    "description": "Create a user using their name, age, and whether they are an administrator.",
+    "parameters": {
+      "name": {
+        "type": "string"
+      },
+      "age": {
+        "type": "number"
+      },
+      "is_admin": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_create_product",
+    "description": "Create a product using its name, price, and whether it is currently available.",
+    "parameters": {
+      "name": {
+        "type": "string"
+      },
+      "price": {
+        "type": "number"
+      },
+      "available": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  }
+]

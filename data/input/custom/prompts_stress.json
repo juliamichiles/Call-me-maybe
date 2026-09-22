@@ -1,0 +1,143 @@
+[
+  {
+    "prompt": "Add 1 and 2"
+  },
+  {
+    "prompt": "Add -100 and 50"
+  },
+  {
+    "prompt": "Add 3.14159 and 2.71828"
+  },
+  {
+    "prompt": "What is 999999999999 plus 1?"
+  },
+  {
+    "prompt": "Greet Alice"
+  },
+  {
+    "prompt": "Say hello to Bob"
+  },
+  {
+    "prompt": "Greet Dr. Smith"
+  },
+  {
+    "prompt": "Reverse 'hello'"
+  },
+  {
+    "prompt": "Reverse 'Hello World!'"
+  },
+  {
+    "prompt": "Reverse ''"
+  },
+  {
+    "prompt": "Reverse '12345'"
+  },
+  {
+    "prompt": "Reverse '@#$%'"
+  },
+  {
+    "prompt": "Create a user named Alice who is 25 and is an administrator"
+  },
+  {
+    "prompt": "Create a user named Bob who is 40 and is not an administrator"
+  },
+  {
+    "prompt": "Create a product named Laptop costing 1299.99 that is available"
+  },
+  {
+    "prompt": "Create a product named Mouse costing 25 that is unavailable"
+  },
+  {
+    "prompt": "Multiply 10 by 20"
+  },
+  {
+    "prompt": "Divide 100 by 4"
+  },
+  {
+    "prompt": "Subtract 50 from 100"
+  },
+  {
+    "prompt": "Add 100 and 200"
+  },
+  {
+    "prompt": "Calculate 5 times 5"
+  },
+  {
+    "prompt": "What is 100 divided by 10?"
+  },
+  {
+    "prompt": "Replace all numbers in 'I am 25 years old' with 'NUMBER'"
+  },
+  {
+    "prompt": "Replace all vowels in 'Hello World' with '*'"
+  },
+  {
+    "prompt": "Replace spaces in 'hello world' with '_'" 
+  },
+  {
+    "prompt": "Replace 'cat' with 'dog' in 'the cat chased another cat'"
+  },
+  {
+    "prompt": "Process the string 'hello world'"
+  },
+  {
+    "prompt": "Process the string ''"
+  },
+  {
+    "prompt": "Process the string '@#$%^&*'"
+  },
+  {
+    "prompt": "Process the string '123456789'"
+  },
+  {
+    "prompt": "Process the number 0"
+  },
+  {
+    "prompt": "Process the number -123.456"
+  },
+  {
+    "prompt": "Process the number 999999999999"
+  },
+  {
+    "prompt": "Enable the feature"
+  },
+  {
+    "prompt": "Disable the feature"
+  },
+  {
+    "prompt": "Set admin status to true"
+  },
+  {
+    "prompt": "Set admin status to false"
+  },
+  {
+    "prompt": "Give Alice a greeting"
+  },
+  {
+    "prompt": "Reverse the word computer"
+  },
+  {
+    "prompt": "Calculate the sum of 123 and 456"
+  },
+  {
+    "prompt": "Calculate 123 minus 45"
+  },
+  {
+    "prompt": "Calculate 12 multiplied by 8"
+  },
+  {
+    "prompt": "Calculate 144 divided by 12"
+  },
+  {
+    "prompt": "What should I do with 10 and 20?"
+  },
+  {
+    "prompt": "I need to work with the numbers 10 and 20"
+  },
+  {
+    "prompt": "Find Alice's username"
+  },
+  {
+    "prompt": "Get Alice's email"
+  }
+]

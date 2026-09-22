@@ -1,0 +1,44 @@
+[
+  {
+    "prompt": "Process the string 'hello'"
+  },
+  {
+    "prompt": "Process the string ''"
+  },
+  {
+    "prompt": "Process the string ' '"
+  },
+  {
+    "prompt": "Process the string 'hello world'"
+  },
+  {
+    "prompt": "Process the string 'Hello, World!'"
+  },
+  {
+    "prompt": "Process the string '12345'"
+  },
+  {
+    "prompt": "Process the string 'hello123'"
+  },
+  {
+    "prompt": "Process the string 'C++'"
+  },
+  {
+    "prompt": "Process the string '@#$%^&*'"
+  },
+  {
+    "prompt": "Process the string 'a/b/c'"
+  },
+  {
+    "prompt": "Process the string 'foo.bar'"
+  },
+  {
+    "prompt": "Process the string 'line one line two'"
+  },
+  {
+    "prompt": "Combine 'hello' and 'world'"
+  },
+  {
+    "prompt": "Combine 'foo bar' and 'baz qux'"
+  }
+]

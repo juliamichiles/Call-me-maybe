@@ -1,0 +1,23 @@
+[
+  {
+    "prompt": "Replace all numbers in 'Hello 123' with 'NUMBER'"
+  },
+  {
+    "prompt": "Replace all digits in 'abc123def456' with 'X'"
+  },
+  {
+    "prompt": "Replace all vowels in 'hello world' with '*'" 
+  },
+  {
+    "prompt": "Replace every lowercase letter in 'Hello World' with 'x'"
+  },
+  {
+    "prompt": "Replace spaces in 'hello world test' with underscores"
+  },
+  {
+    "prompt": "Replace every occurrence of 'cat' in 'cat dog cat' with 'dog'"
+  },
+  {
+    "prompt": "Replace all capital letters in 'Hello WORLD' with '#'"
+  }
+]

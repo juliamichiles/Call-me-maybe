@@ -1,0 +1,20 @@
+[
+  {
+    "name": "fn_replace_regex",
+    "description": "Replace every occurrence matching a regular expression with a replacement string.",
+    "parameters": {
+      "source_string": {
+        "type": "string"
+      },
+      "regex": {
+        "type": "string"
+      },
+      "replacement": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  }
+]

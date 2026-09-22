@@ -1,0 +1,26 @@
+[
+  {
+    "prompt": "Enable the feature"
+  },
+  {
+    "prompt": "Disable the feature"
+  },
+  {
+    "prompt": "Set the feature to enabled"
+  },
+  {
+    "prompt": "Set the feature to disabled"
+  },
+  {
+    "prompt": "The feature should be enabled"
+  },
+  {
+    "prompt": "The feature should be disabled"
+  },
+  {
+    "prompt": "Set admin status to true"
+  },
+  {
+    "prompt": "Set admin status to false"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "prompt": "Add 10 and 5"
+  },
+  {
+    "prompt": "Sum 100 and 25"
+  },
+  {
+    "prompt": "Calculate 10 plus 5"
+  },
+  {
+    "prompt": "Subtract 5 from 10"
+  },
+  {
+    "prompt": "Take 5 away from 10"
+  },
+  {
+    "prompt": "Calculate 10 minus 5"
+  },
+  {
+    "prompt": "Multiply 10 by 5"
+  },
+  {
+    "prompt": "Calculate 10 times 5"
+  },
+  {
+    "prompt": "What is 10 multiplied by 5?"
+  },
+  {
+    "prompt": "Divide 10 by 5"
+  },
+  {
+    "prompt": "What is 10 divided by 5?"
+  },
+  {
+    "prompt": "Calculate 10 over 5"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "prompt": "Get the user Alice"
+  },
+  {
+    "prompt": "Find Alice's username"
+  },
+  {
+    "prompt": "What is Alice's username?"
+  },
+  {
+    "prompt": "Get Alice's email"
+  },
+  {
+    "prompt": "What email does Alice use?"
+  },
+  {
+    "prompt": "Find the email address for Bob"
+  }
+]

@@ -4,6 +4,16 @@ _This project has been created as part of the 42 curriculum by juliatav_
 
 uses Coalescing optimization to enhence performance
 
+# Instructions:
+### Run with defaults:
+`make run`
+
+### Run with custom INPUT and/or FUNCTIONS files:
+`make run INPUT=<path-to-file> FUNCTIONS=<path-to-file>`
+
+### Run with visualization enabled:
+`make visualize`
+
 # Trie algorithm:
 VocabularyTrie efficiently retrieves token IDs given a prefix in O(L) time (L beingthe prefix length).
 

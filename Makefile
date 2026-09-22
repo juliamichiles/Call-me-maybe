@@ -1,11 +1,8 @@
 PYTHON = uv run python
 
-INPUT = data/input/function_calling_tests.json
-# INPUT = data/input/function_calling_tests_NO_NUMBERS.json
-# INPUT = data/input/function_calling_tests_JUST_REGEX.json 
-# INPUT = data/input/function_calling_tests_NO_REGEX.json
-FUNCTIONS = data/input/functions_definition.json
-OUTPUT = data/output/function_calling_results.json
+INPUT ?= data/input/function_calling_tests.json
+FUNCTIONS ?= data/input/functions_definition.json
+OUTPUT ?= data/output/function_calling_results.json
 
 all: run
 
@@ -17,6 +14,13 @@ run:
 		--functions_definition $(FUNCTIONS) \
 		--input $(INPUT) \
 		--output $(OUTPUT)
+
+visualize:
+	$(PYTHON) -m src \
+		--functions_definition $(FUNCTIONS) \
+		--input $(INPUT) \
+		--output $(OUTPUT) \
+		--visualize
 
 debug:
 	$(PYTHON) -m pdb -m src \
@@ -31,7 +35,9 @@ clean:
 
 lint:
 	uv run flake8 .
-	uv run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+	uv run mypy . --warn-return-any --warn-unused-ignores \
+		--ignore-missing-imports --disallow-untyped-defs \
+		--check-untyped-defs
 
 lint-strict:
 	uv run flake8 .
@@ -39,4 +45,4 @@ lint-strict:
 
 re: clean run
 
-.PHONY: all install run debug clean lint lint-strict re
+.PHONY: all install run visualize debug clean lint lint-strict re

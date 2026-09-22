@@ -1,0 +1,26 @@
+[
+  {
+    "name": "fn_set_status",
+    "description": "Set whether a feature is enabled.",
+    "parameters": {
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  },
+  {
+    "name": "fn_check_access",
+    "description": "Check whether a user has access using a boolean value.",
+    "parameters": {
+      "is_admin": {
+        "type": "boolean"
+      }
+    },
+    "returns": {
+      "type": "boolean"
+    }
+  }
+]

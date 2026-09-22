@@ -1,0 +1,20 @@
+[
+  {
+    "prompt": "Create a user named Alice who is 25 years old and is an administrator"
+  },
+  {
+    "prompt": "Create a user named Bob who is 31 years old and is not an administrator"
+  },
+  {
+    "prompt": "Create a user named Charlie, age 42, admin true"
+  },
+  {
+    "prompt": "Create a product called Laptop that costs 999.99 and is available"
+  },
+  {
+    "prompt": "Create a product called Keyboard costing 49.95 which is unavailable"
+  },
+  {
+    "prompt": "Create a product named Mouse, price 25, available true"
+  }
+]

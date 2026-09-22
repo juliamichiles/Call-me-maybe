@@ -1,0 +1,29 @@
+[
+  {
+    "name": "fn_process_string",
+    "description": "Process a string.",
+    "parameters": {
+      "text": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+    "name": "fn_combine_strings",
+    "description": "Combine two strings.",
+    "parameters": {
+      "first": {
+        "type": "string"
+      },
+      "second": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  }
+]
