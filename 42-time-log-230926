@@ -1,0 +1,2 @@
+[given files] make visualize  102.35s user 18.73s system 103% cpu 1:56.81 total
+[stress + normal functions] make visualize INPUT=data/input/custom/prompts_stress.json  351.42s user 61.47s system 104% cpu 6:35.84 total
