@@ -66,7 +66,6 @@ class JSONStateMachine:
         self.buffer = ""
 
     def _encoded(self, text: str) -> List[int]:
-        # return self.model.encode(text).tolist()[0]
         encoded = cast(
                 List[List[int]],
                 self.model.encode(text).tolist(),
@@ -107,14 +106,18 @@ class JSONStateMachine:
             self._escape_active = False
             self.param_val_buf = ""
             self.current_param_name = p_name
-            self.current_param_type = p_prop.type
+            raw_type = p_prop.type.lower()
+            if raw_type in ("string", "str", "text", "txt"):
+                self.current_param_type = "string"
+            elif raw_type in ("number", "integer", "int", "float", "num"):
+                self.current_param_type = "number"
+            elif raw_type in ("boolean", "bool"):
+                self.current_param_type = "boolean"
+            else:
+                self.current_param_type = raw_type
 
             appended_text = f'"{p_name}": '
             self.buffer += appended_text
-
-            # All parameter values now go through SELECT_PARAMETER_VALUE
-            # regardless of type. The type constraint is applied in
-            # get_allowed_token_ids()
             self.current_state = State.SELECT_PARAMETER_VALUE
             return self._encoded(appended_text)
 
@@ -174,11 +177,10 @@ class JSONStateMachine:
 
         if parameter_type == "string":
             return self._get_allowed_string_tokens()
-        if parameter_type in ("number", "integer"):
+        if parameter_type == "number":
             return self._get_allowed_number_tokens()
         if parameter_type == "boolean":
             return self._get_allowed_boolean_tokens()
-        # FIXME: Is that right?? Or should I handle other types differently?
         raise CallMeError(
             f"Unsupported parameter type: {self.current_param_type}"
         )
@@ -232,7 +234,6 @@ class JSONStateMachine:
         """
         token_str = self.vocab_mgr.id_to_token[token_id]
 
-        # All parameter value states go into param_val_buf
         if self.current_state == State.SELECT_PARAMETER_VALUE:
             self.param_val_buf += token_str
         else:
@@ -244,7 +245,6 @@ class JSONStateMachine:
         elif self.current_state == State.SELECT_PARAMETER_VALUE:
             self._handle_parameter_value_selection(token_str)
 
-        # Try to advance deterministically
         while True:
             det_tokens = self.advance_deterministic()
             if det_tokens is None:
@@ -254,16 +254,11 @@ class JSONStateMachine:
     def _handle_function_selection(self, token_str: str) -> None:
         """Process token during function name selection."""
         self.fn_name_buffer += token_str
-        # print(
-        #    f"DEBUG update: fn_name_buffer='{self.fn_name_buffer}',"
-        #    f" token_str='{token_str}'"
-        # )
 
         matching_fn = next(
             (f for f in self.functions if f.name == self.fn_name_buffer),
             None
         )
-        # print(f"DEBUG update: matching_fn={matching_fn}")
         if matching_fn:
             self.selected_function = matching_fn
             self.parameter_queue = deque(

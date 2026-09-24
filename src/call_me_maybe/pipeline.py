@@ -2,7 +2,6 @@ from typing import List, Dict, Any, Set, Optional, TYPE_CHECKING
 import json
 import time
 
-
 from .schemas import FunctionDefinition
 from .state_machine import JSONStateMachine
 from .vocabulary import VocabularyManager
@@ -39,23 +38,25 @@ class Generation:
     def __init__(
             self,
             functions: List[FunctionDefinition],
-            visualize: bool=False) -> None:
+            visualize: bool = False) -> None:
 
         self.functions = functions
         self.visualize = visualize
 
     def _format_prompt(self, user_input: str) -> str:
-        # FIXME: Make this less ugly
         system_guide = (
             "Select one matching function and extract arguments using defined"
             " types.\nFunctions:\n"
         )
 
-        function_lines = [
-            f"- {fn.name}({', '.join(f'{k}: {v.type}' for k, v in fn.parameters.items())}): "
-            f"{fn.description}"
-            for fn in self.functions
-        ]
+        function_lines = []
+        for fn in self.functions:
+            param_parts = []
+            for k, v in fn.parameters.items():
+                param_parts.append(f"{k}: {v.type}")
+            params_str = ", ".join(param_parts)
+            line = f"- {fn.name}({params_str}): {fn.description}"
+            function_lines.append(line)
 
         functions = "\n".join(function_lines)
 
@@ -193,19 +194,6 @@ class Generation:
         finally:
             if visualizer:
                 visualizer.stop()
-
-        # --- PRINT PROFILING REPORT ---
-        # print("\n" + "="*50)
-        # print("          PIPELINE PROFILING REPORT")
-        # print("="*50)
-        # print(f"Total Tokens Generated : {token_count}")
-        # print(f"1. Prompt Encoding     : {t_total_encode:.4f} seconds")
-        # print(f"2. SM Check Allowed Ids: {t_total_sm_allow:.4f} seconds")
-        # print(f"3. LLM Logits Fetch    : {t_total_llm:.4f} seconds")
-        # print(f"4. Next Token Select   : {t_total_select:.4f} seconds")
-        # print(f"5. SM State Update     : {t_total_sm_update:.4f} seconds")
-        # print("="*50 + "\n")
-
         try:
             parsed_output = json.loads(state_machine.buffer)
             return {

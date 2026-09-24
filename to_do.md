@@ -12,17 +12,17 @@
 - [ ] add more try/except blocks + add them on imports (for pydantic and other external stuff)
 - [ ] pipeline is big and messy, maybe there's some redundant stuff, check it!
 - [ ] visualization has issues:
-    - [ ] Last token section blinks, I don't like it
     - [ ] make text pink always, regardless of terminal colors
     - [ ] I'm not sure math/stats are actually correct
     - [ ] Add a "final graph" with performance profiling for the whole process
 - [ ] run this on 42's pc bc apparently WSL-Ubuntu is slowing the program down 
-- [ ] somehow make the Makefile handle flags
 - [ ] linters
 - [ ] clean files, remove unused stuff
 - [ ] README
 
 ## Fixed:
+- [X] accept more keywords for parameter types
+- [X] somehow make the Makefile handle flags
 - [X] visualization:
     - [X] its printing some invalid tokens I don't even know were they're comming
         from, bc output file is normal and valid

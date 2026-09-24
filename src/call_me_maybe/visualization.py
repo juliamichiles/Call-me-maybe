@@ -9,7 +9,7 @@ try:
     from rich.table import Table
     from rich.text import Text
 except (ImportError, ModuleNotFoundError) as e:
-      raise CallMeError(e)
+    raise CallMeError(e)
 
 if TYPE_CHECKING:
     from .state_machine import JSONStateMachine
@@ -130,9 +130,9 @@ class GenVisualizer:
 
         # three smaller panels side-by-side using a grid
         bottom_grid = Table.grid(expand=True, padding=(0, 1))
-        bottom_grid.add_column(ratio=1) # 25% width
-        bottom_grid.add_column(ratio=1) # 25% width
-        bottom_grid.add_column(ratio=2) # 50% width for the charts
+        bottom_grid.add_column(ratio=1)  # 25% width
+        bottom_grid.add_column(ratio=1)  # 25% width
+        bottom_grid.add_column(ratio=2)  # 50% width for the charts
 
         bottom_grid.add_row(
             self._render_constraints(),
@@ -264,7 +264,7 @@ class GenVisualizer:
         }
 
         for process, t in self.timings.items():
-            pct = t/ total_time
+            pct = t / total_time
             bar_len = 12
             filled = int(pct * bar_len)
             bar = "█" * filled + "░" * (bar_len - filled)

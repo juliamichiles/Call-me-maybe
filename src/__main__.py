@@ -3,6 +3,7 @@ import argparse
 import json
 import sys
 
+
 from llm_sdk import Small_LLM_Model
 
 from call_me_maybe.io import load_functions_definition, load_input_prompts
@@ -10,8 +11,9 @@ from call_me_maybe.vocabulary import VocabularyManager
 from call_me_maybe.pipeline import Generation
 from call_me_maybe.errors import CallMeError
 
+
 def main() -> None:
-    
+
     parser = argparse.ArgumentParser(
             description="Constrained Decoding Function Caller"
     )
@@ -45,7 +47,7 @@ def main() -> None:
         model = Small_LLM_Model()
         vocab_path = model.get_path_to_vocab_file()
         vocab_mgr = VocabularyManager(vocab_path)
-        
+
         generator = Generation(functions, visualize=args.visualize)
         results = []
 
@@ -65,10 +67,7 @@ def main() -> None:
     except CallMeError as e:
         print(f"Application error: {e}", file=sys.stderr)
         sys.exit(1)
-    # except Exception as e:
-        # FIXME: more specific errors
-        # print(f"Unexpected error: {e}", file=sys.stderr)
-        # sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

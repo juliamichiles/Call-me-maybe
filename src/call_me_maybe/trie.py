@@ -1,4 +1,4 @@
-from typing import Dict, List, Set, Optional
+from typing import Dict, Set
 
 
 class TrieNode:
@@ -52,4 +52,3 @@ class VocabularyTrie:
             result.update(current.terminal_token_ids)
 
         return result
-
