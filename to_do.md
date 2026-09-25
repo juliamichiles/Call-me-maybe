@@ -6,19 +6,16 @@
     - see possible_solution.md
 
 ## Next:
+- [ ] apparently numeric grammar is wrong - not passing moulinette
+- [ ] also other moulinette issues - trailing space in one case
 - [ ] more tests with more files
     - [ ] add some invalid files
 - [ ] make system prompt slightly bigger/more robust
 - [ ] add more try/except blocks + add them on imports (for pydantic and other external stuff)
 - [ ] pipeline is big and messy, maybe there's some redundant stuff, check it!
 - [ ] visualization has issues:
-    - [ ] make text pink always, regardless of terminal colors
     - [ ] I'm not sure math/stats are actually correct
     - [ ] Add a "final graph" with performance profiling for the whole process
-- [ ] run this on 42's pc bc apparently WSL-Ubuntu is slowing the program down 
-- [ ] linters
-- [ ] clean files, remove unused stuff
-- [ ] README
 
 ## Fixed:
 - [X] accept more keywords for parameter types
@@ -38,6 +35,10 @@
 - [X] Generating invalid JSON, but much faster
 - [X] (see tests)
 - [X] write orchestrator that will call state_machine and trie
+- [X] run this on 42's pc bc apparently WSL-Ubuntu is slowing the program down 
+- [X] linters
+- [X] clean files, remove unused stuff
+- [X] README
 
 ## Questions:
 - What does the LLM even do with the prompt after encoding it? How is it used?
