@@ -75,18 +75,17 @@ flowchart TD
     
     Z --> Y([Return Parsed Function Call]):::terminal
 
-## State Machine Architecture
 flowchart TD
     classDef force fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
     classDef llm fill:#fff3e0,stroke:#e65100,stroke-width:2px;
     classDef term fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
 
     %% Deterministic States
-    S_START["EMIT_START<br/>Appends: '{'name': '"]:::force
-    S_HEADER["EMIT_PARAMS_HEADER<br/>Appends: '', 'parameters': {'"]:::force
-    S_KEY["EMIT_PARAM_KEY<br/>Pops param from queue<br/>Appends: ''param_name': '"]:::force
-    S_SEP["EMIT_PARAM_SEP<br/>Appends: ', '"]:::force
-    S_END_DET["EMIT_END<br/>Appends: '}}'"]:::force
+    S_START["EMIT_START<br/>Appends: {&quot;name&quot;: &quot;"]:::force
+    S_HEADER["EMIT_PARAMS_HEADER<br/>Appends: &quot;, &quot;parameters&quot;: {"]:::force
+    S_KEY["EMIT_PARAM_KEY<br/>Pops param from queue<br/>Appends: &quot;param_name&quot;: "]:::force
+    S_SEP["EMIT_PARAM_SEP<br/>Appends: , "]:::force
+    S_END_DET["EMIT_END<br/>Appends: }}"]:::force
 
     %% LLM-Driven States
     S_FN["SELECT_FUNCTION<br/>Constrained by available function names"]:::llm
