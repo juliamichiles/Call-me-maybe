@@ -45,72 +45,67 @@ VocabularyTrie efficiently retrieves token IDs given a prefix in O(L) time (L be
 - https://pub.towardsai.net/constrained-decoding-forcing-llms-to-respect-your-taxonomy-3aaaf13329f9
 
 
-# JSON State Machine:
 ## System Architecture & Workflow
+
+## Generation Pipeline
 
 ```mermaid
 flowchart TD
-    classDef force fill:#f2f0ff,stroke:#6554af,stroke-width:2px;
-    classDef llm fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef step fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef decision fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef terminal fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+
+    A([Start: User Prompt]) --> B["_format_prompt()"]:::step
+    B --> C["model.encode(prompt)"]:::step
+    C --> D["Initialize JSONStateMachine"]:::step
+    
+    D --> E{"State Machine Complete?"}:::decision
+    E -- Yes --> Z["json.loads(buffer)"]:::step
+    E -- No --> F["state_machine.get_allowed_token_ids()"]:::step
+    
+    F --> G{"Any Pending Deterministic Tokens?"}:::decision
+    G -- Yes --> H["Append Deterministic Tokens to Input IDs"]:::step
+    H --> E
+    
+    G -- No --> I["model.get_logits_from_input_ids()"]:::step
+    I --> J["select_next_token()<br/>Mask unallowed logits with -inf"]:::step
+    J --> K["state_machine.update(next_token)"]:::step
+    K --> L["Append next_token to Input IDs"]:::step
+    L --> E
+    
+    Z --> Y([Return Parsed Function Call]):::terminal
+
+## State Machine Architecture
+flowchart TD
+    classDef force fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef llm fill:#fff3e0,stroke:#e65100,stroke-width:2px;
     classDef term fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    classDef pipe fill:#fff3e0,stroke:#e65100,stroke-dasharray: 5 5;
 
-    subgraph Pipeline ["Pipeline Loop: generation.py"]
-        A([Start: User Prompt]) --> B["_format_prompt()"]
-        B --> C["model.encode(prompt)"]
-        C --> D["Initialize JSONStateMachine"]
-        
-        D --> E{"State Machine Complete?"}
-        E -- Yes --> Z["json.loads(buffer)"]
-        E -- No --> F["get_allowed_token_ids()"]
-        
-        F --> G{"Any Pending Deterministic Tokens?"}
-        G -- Yes --> H["Append Deterministic Tokens to Input IDs"]
-        H --> E
-        
-        G -- No --> I["model.get_logits_from_input_ids()"]
-        I --> J["select_next_token()\nMask unallowed logits with -inf"]
-        J --> K["state_machine.update(next_token)"]
-        K --> L["Append next_token to Input IDs"]
-        L --> E
-        
-        Z --> Y([Return Parsed Function Call])
-    end
+    %% Deterministic States
+    S_START["EMIT_START<br/>Appends: '{'name': '"]:::force
+    S_HEADER["EMIT_PARAMS_HEADER<br/>Appends: '', 'parameters': {'"]:::force
+    S_KEY["EMIT_PARAM_KEY<br/>Pops param from queue<br/>Appends: ''param_name': '"]:::force
+    S_SEP["EMIT_PARAM_SEP<br/>Appends: ', '"]:::force
+    S_END_DET["EMIT_END<br/>Appends: '}}'"]:::force
 
-    subgraph StateMachine ["State Machine Transitions: state_machine.py"]
-        direction TB
-        
-        %% Deterministic States
-        S_START["EMIT_START\nAppends: '{\"name\": \"'"]:::force
-        S_HEADER["EMIT_PARAMS_HEADER\nAppends: '\", \"parameters\": {'"]:::force
-        S_KEY["EMIT_PARAM_KEY\nPops param from queue\nAppends: '\"param_name\": '"]:::force
-        S_SEP["EMIT_PARAM_SEP\nAppends: ', '"]:::force
-        S_END_DET["EMIT_END\nAppends: '}}'"]:::force
+    %% LLM-Driven States
+    S_FN["SELECT_FUNCTION<br/>Constrained by available function names"]:::llm
+    S_VAL["SELECT_PARAMETER_VALUE<br/>Constrained by parameter type<br/>(string, number, boolean)"]:::llm
 
-        %% LLM-Driven States
-        S_FN["SELECT_FUNCTION\nConstrained by available function names"]:::llm
-        S_VAL["SELECT_PARAMETER_VALUE\nConstrained by parameter type\n(string, number, boolean)"]:::llm
+    %% Terminal State
+    S_END_TERM(("END")):::term
 
-        %% Terminal State
-        S_END_TERM(("END")):::term
-
-        %% Transitions
-        S_START --> S_FN
-        S_FN -- "Match complete" --> S_HEADER
-        
-        S_HEADER -- "queue not empty" --> S_KEY
-        S_HEADER -- "queue empty" --> S_END_TERM
-        
-        S_KEY --> S_VAL
-        
-        S_VAL -- "Value finished & queue not empty" --> S_SEP
-        S_VAL -- "Value finished & queue empty" --> S_END_DET
-        
-        S_SEP --> S_KEY
-        S_END_DET --> S_END_TERM
-    end
-
-    %% Mapping between loop and states
-    F -. Resolves transitions .-> StateMachine
-    K -. State transition trigger .-> StateMachine
-
+    %% Transitions
+    S_START --> S_FN
+    S_FN -- "Match complete" --> S_HEADER
+    
+    S_HEADER -- "Queue not empty" --> S_KEY
+    S_HEADER -- "Queue empty" --> S_END_TERM
+    
+    S_KEY --> S_VAL
+    
+    S_VAL -- "Value finished & Queue not empty" --> S_SEP
+    S_VAL -- "Value finished & Queue empty" --> S_END_DET
+    
+    S_SEP --> S_KEY
+    S_END_DET --> S_END_TERM
