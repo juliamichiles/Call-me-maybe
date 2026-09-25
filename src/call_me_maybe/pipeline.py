@@ -14,7 +14,7 @@ except (ImportError, ModuleNotFoundError) as e:
     raise CallMeError(e)
 
 if TYPE_CHECKING:
-    from llm_sdk import Small_LLM_Model
+    from llm_sdk import Small_LLM_Model  # type: ignore[attr-defined]
 
 
 def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:

@@ -1,8 +1,6 @@
 from typing import Dict, DefaultDict, Set
 import json
 from collections import defaultdict
-# import time
-# from functools import lru_cache
 
 from .trie import VocabularyTrie
 
@@ -12,13 +10,11 @@ class VocabularyManager:
 
     def __init__(self, vocab_file_path: str) -> None:
         """Load vocabulary from file."""
-        # t_start = time.perf_counter()
         self.vocab_path = vocab_file_path
         self.id_to_token: Dict[int, str] = {}
         self.token_to_id: DefaultDict[str, Set[int]] = defaultdict(set)
         self.trie = VocabularyTrie()
 
-        # Pre computed token classification sets
         self.quote_ids: Set[int] = set()
         self.valid_string_body_ids: Set[int] = set()
         self.valid_string_all_ids: Set[int] = set()
@@ -28,33 +24,10 @@ class VocabularyManager:
         self.delimiter_ids: Set[int] = set()
 
         self._load_and_build()
-        # t_end = time.perf_counter()
-        # import sys
-        # print(
-        #         "[TIMING] VocabularyManager.__init__ vocab loading: "
-        #         f"{(t_end - t_start)*1000:.2f}ms",
-        #         file=sys.stderr
-        # )
-
-    # @lru_cache(maxsize=4096)
-    # def tokens_for_prefix(self, prefix: str) -> tuple[int, ...]:
-    #    return tuple(self.trie.get_tokens_for_prefix(prefix))
 
     def _clean_token_string(self, token_str: str) -> str:
         """Converts tokenizer space markers (e.g., 'Ġ') to standard spaces."""
-        replacements = {
-                "Ġ": " ",
-                # "Ċ": "\n",
-                # "ĉ": "\t",
-                # "č": "\r",
-                # "Ā": "\x00"
-                # add more???
-        }
-        cleaned = token_str
-
-        for marker, replacement in replacements.items():
-            cleaned = cleaned.replace(marker, replacement)
-
+        cleaned = token_str.replace("Ġ", " ")
         return cleaned
 
     def _load_and_build(self) -> None:

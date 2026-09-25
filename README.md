@@ -2,7 +2,10 @@ _This project has been created as part of the 42 curriculum by juliatav_
 
 ![visualization](assets/visualization.png)
 
+##  Optimizations:
 uses Coalescing optimization to enhence performance
+pre-indexing/precomputation.
+vocabulary trie 
 
 # Instructions:
 ### Run with defaults:
@@ -43,97 +46,71 @@ VocabularyTrie efficiently retrieves token IDs given a prefix in O(L) time (L be
 
 
 # JSON State Machine:
-┌─────────────────────────────────────────────────────────────┐
-│                    JSONStateMachine                         │
-└─────────────────────────────────────────────────────────────┘
+## System Architecture & Workflow
 
- INIT
-  │
-  ├── store prompt / functions / vocabulary
-  ├── state = START
-  ├── buffer = ""
-  ├── selected_function = None
-  ├── param_queue = []
-  └── precompute value tokens
-  │
-  ▼
-┌──────────────────────┐
-│ MODEL GENERATES TOKEN│◄──────────────────────────────┐
-└──────────┬───────────┘                               │
-           │                                           │
-           ▼                                           │
-      update(token)                                    │
-           │                                           │
-           ├── token ID → token string                 │
-           ├── append to buffer                        │
-           └── update_internal_state()                 │
-                         │                             │
-                         ▼                             │
-               ┌───────────────────┐                   │
-               │ Function selected?│                   │
-               └─────────┬─────────┘                   │
-                    NO   │   YES                       │
-                         │                             │
-                         ▼                             │
-                  detect function                      │
-                         │                             │
-                         ▼                             │
-                  set param_queue                      │
-                         │                             │
-                         ▼                             │
-                  determine type                       │
-                         │                             │
-                 ┌───────┼────────┐                    │
-                 ▼       ▼        ▼                    │
-              NUMBER  STRING  BOOLEAN                  │
-                 │       │        │                    │
-                 └───────┴────────┘                    │
-                         │                             │
-                         ▼                             │
-                 parameter complete?                   │
-                    │           │                      │
-                   NO          YES                     │
-                    │           │                      │
-                    │           ▼                      │
-                    │       pop parameter              │
-                    │           │                      │
-                    └───────────┘                      │
-                                                       │
-                         │                             │
-                         ▼                             │
-                 get_allowed_token_ids()               │
-                         │                             │
-                         ▼                             │
-              _get_candidate_tokens()                  │
-                         │                             │
-                         ├── Trie lookup               │
-                         ├── value_tokens              │
-                         └── structural targets        │
-                         │                             │
-                         ▼                             │
-              _is_candidate_valid()                    │
-                         │                             │
-                         ▼                             │
-                  allowed token IDs                    │
-                         │                             │
-                         └──────────────► MODEL ───────┘
-                                           │
-                                           │
-                              all params complete?
-                                           │
-                                           ▼
-                                      buffer ends
-                                       with "}}"
-                                           │
-                                           ▼
-                                          END
-                                           │
-                                           ▼
-                                  get_result_dict()
-                                           │
-                                           ▼
-                                      json.loads()
-                                           │
-                                           ▼
-                                    Python dict
-    ### add UML State Machine
+
+```mermaid
+flowchart TD
+    classDef force fill:#f2f0ff,stroke:#6554af,stroke-width:2px;
+    classDef llm fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef term fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef pipe fill:#fff3e0,stroke:#e65100,stroke-dasharray: 5 5;
+
+    subgraph Pipeline ["Pipeline Loop: generation.py"]
+        A([Start: User Prompt]) --> B["_format_prompt()"]
+        B --> C["model.encode(prompt)"]
+        C --> D["Initialize JSONStateMachine"]
+        
+        D --> E{"State Machine Complete?"}
+        E -- Yes --> Z["json.loads(buffer)"]
+        E -- No --> F["get_allowed_token_ids()"]
+        
+        F --> G{"Any Pending Deterministic Tokens?"}
+        G -- Yes --> H["Append Deterministic Tokens to Input IDs"]
+        H --> E
+        
+        G -- No --> I["model.get_logits_from_input_ids()"]
+        I --> J["select_next_token()\nMask unallowed logits with -inf"]
+        J --> K["state_machine.update(next_token)"]
+        K --> L["Append next_token to Input IDs"]
+        L --> E
+        
+        Z --> Y([Return Parsed Function Call])
+    end
+
+    subgraph StateMachine ["State Machine Transitions: state_machine.py"]
+        direction TB
+        
+        %% Deterministic States
+        S_START["EMIT_START\nAppends: '{\"name\": \"'"]:::force
+        S_HEADER["EMIT_PARAMS_HEADER\nAppends: '\", \"parameters\": {'"]:::force
+        S_KEY["EMIT_PARAM_KEY\nPops param from queue\nAppends: '\"param_name\": '"]:::force
+        S_SEP["EMIT_PARAM_SEP\nAppends: ', '"]:::force
+        S_END_DET["EMIT_END\nAppends: '}}'"]:::force
+
+        %% LLM-Driven States
+        S_FN["SELECT_FUNCTION\nConstrained by available function names"]:::llm
+        S_VAL["SELECT_PARAMETER_VALUE\nConstrained by parameter type\n(string, number, boolean)"]:::llm
+
+        %% Terminal State
+        S_END_TERM(("END")):::term
+
+        %% Transitions
+        S_START --> S_FN
+        S_FN -- "Match complete" --> S_HEADER
+        
+        S_HEADER -- "queue not empty" --> S_KEY
+        S_HEADER -- "queue empty" --> S_END_TERM
+        
+        S_KEY --> S_VAL
+        
+        S_VAL -- "Value finished & queue not empty" --> S_SEP
+        S_VAL -- "Value finished & queue empty" --> S_END_DET
+        
+        S_SEP --> S_KEY
+        S_END_DET --> S_END_TERM
+    end
+
+    %% Mapping between loop and states
+    F -. Resolves transitions .-> StateMachine
+    K -. State transition trigger .-> StateMachine

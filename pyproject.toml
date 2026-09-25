@@ -39,6 +39,18 @@ warn_unused_ignores = true
 ignore_missing_imports = true
 disallow_untyped_defs = true
 check_untyped_defs = true
+exclude = [
+    "^llm_sdk/",
+    "^\\.venv/",
+    "^build/",
+    "^dist/",
+]
+
+# Ignore errors inside external module imports
+[[tool.mypy.overrides]]
+module = "llm_sdk.*"
+ignore_errors = true
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
