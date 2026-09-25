@@ -66,6 +66,7 @@ Runs:
 
 Equivalent to:
 `make clean && make run`
+
 ---
 ## Algorithm explanation:
 
@@ -107,7 +108,8 @@ I also created test inputs covering strings, numbers, booleans, multiple paramet
     "mainBkg": "#111827",
     "primaryTextColor": "#F8FAFC",
     "lineColor": "#94A3B8",
-    "fontFamily": "Arial, sans-serif"
+    "fontFamily": "Arial, sans-serif",
+    "edgeLabelBackground": "#334155"
   },
   "flowchart": {
     "curve": "basis",
@@ -183,7 +185,8 @@ flowchart TD
     "mainBkg": "#111827",
     "primaryTextColor": "#F8FAFC",
     "lineColor": "#94A3B8",
-    "fontFamily": "Arial, sans-serif"
+    "fontFamily": "Arial, sans-serif",
+    "edgeLabelBackground": "#334155"
   },
   "flowchart": {
     "curve": "basis",
