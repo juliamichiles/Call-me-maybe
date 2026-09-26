@@ -44,6 +44,7 @@ exclude = [
     "^\\.venv/",
     "^build/",
     "^dist/",
+    "^moulinette/",
 ]
 
 # Ignore errors inside external module imports

@@ -35,15 +35,24 @@ def select_next_token(logits: List[float], allowed_ids: Set[int]) -> int:
 
 
 class Generation:
+    """Generate constrained JSON function calls from user prompts."""
     def __init__(
             self,
             functions: List[FunctionDefinition],
             visualize: bool = False) -> None:
-
+        """Initialize the generation pipeline.
+            Args:
+                functions: Function definitions available for selection.
+                visualize: Whether to enable generation visualization.
+        """
         self.functions = functions
         self.visualize = visualize
 
     def _format_prompt(self, user_input: str) -> str:
+        """Build the prompt containing functions and the user request.
+        Args: user_input: User request to include in the prompt.
+        Returns: A formatted prompt for the language model.
+        """
         system_guide = (
             "Select one matching function and extract arguments using defined"
             " types.\nFunctions:\n"
@@ -75,6 +84,13 @@ class Generation:
             ) -> Dict[str, Any]:
         """Generates a structured JSON function call using token-by-token
                 constrained decoding.
+            Args:
+                model: Language model used for token generation.
+                prompt_txt: User request to process.
+                vocab_mgr: Vocabulary manager used to map token IDs to text.
+                max_tokens: Maximum number of tokens to generate.
+            Returns: A dictionary containing the prompt, function name, and
+                parameters.
         """
         t_total_encode = 0.0
         t_total_llm = 0.0

@@ -2,6 +2,7 @@ from typing import Dict, Set
 
 
 class TrieNode:
+    """ Representation of an individual node in the vocabulary trie."""
     def __init__(self) -> None:
         self.children: Dict[str, TrieNode] = {}
         self.token_ids: Set[int] = set()
@@ -13,7 +14,9 @@ class VocabularyTrie:
         self.root = TrieNode()
 
     def insert(self, token_str: str, token_id: int) -> None:
-        """Inserts a token string and its ID into the Trie."""
+        """Inserts a token string and its ID into the Trie.
+            Args: Token both in ID and string forms.
+        """
 
         current = self.root
         current.token_ids.add(token_id)
@@ -30,6 +33,7 @@ class VocabularyTrie:
     def get_tokens_for_prefix(self, prefix: str) -> Set[int]:
         """Returns all token IDs whose string representations start with
                 the prefix.
+            Args: A prefix (string).
         """
         current = self.root
         for char in prefix:
@@ -40,6 +44,7 @@ class VocabularyTrie:
 
     def get_token_ids_that_prefix(self, text: str) -> Set[int]:
         """Return token IDs whose complete token string is a prefix of text.
+            Args: a text string.
         """
         current = self.root
         result: Set[int] = set()

@@ -1,3 +1,12 @@
+## LAST SANITY CHECK:
+- [ ] should I submit data/ ???
+- [ ] should I keep '.pythonversion' file?
+- [ ] visualization and schemas are missing docstrings
+- [ ] ensure everything is still running at 42
+- [ ] don't forget to submit llm_sdk
+- [ ] run linters one last time 
+- [ ] 'mv to_be_gitignore .gitignore' before pushing into intra's repo 
+
 ## Idea:
 - keep advance_deterministic to force some of the structural JSON chars
 - add a similar logic as the one used to select function to select param values:

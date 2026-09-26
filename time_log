@@ -33,3 +33,4 @@
 23.09.26 - 0h56 - testing at 42's environment
 24.09.26 - 2h42 - fixing storage issues at 42 + linters
 25.09.26 - 7h25 - linters + README + testing
+26.09.26 - 3h37 - fixed float and trailing space issues + fixed docstrings

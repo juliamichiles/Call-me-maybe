@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 from src.call_me_maybe.errors import CallMeError
 try:
     from pydantic import BaseModel
-except ImportError as e:  # add more errors
+except (ModuleNotFoundError, ImportError) as e:
     raise CallMeError(e)
 # FIXME: Rename type to p_type
 # FIXME: Remove unused models

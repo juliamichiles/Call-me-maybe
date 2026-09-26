@@ -32,7 +32,7 @@ class State(Enum):
 class JSONStateMachine:
     """Tracks current state during token generation and determines allowed
               next tokens.
-      """
+    """
     def __init__(
             self,
             prompt_txt: str,
@@ -63,9 +63,14 @@ class JSONStateMachine:
         self.param_val_buf = ""
         self.current_param_name = ""  # Track which parameter we're filling
         self.current_param_type = ""  # Track the type of current parameter
+        self.raw_param_type = ""  # Only exists to append a .0
         self.buffer = ""
 
     def _encoded(self, text: str) -> List[int]:
+        """Returns the encoded form of a string, as in a list of input IDs
+            Args: any text string.
+            Returns: a list form of input IDs (ints)
+        """
         encoded = cast(
                 List[List[int]],
                 self.model.encode(text).tolist(),
@@ -76,13 +81,17 @@ class JSONStateMachine:
         """Appends accumulated parameter value to main buffer and resets local
                 buffer.
         """
+        if self.raw_param_type in ("number", "float", "num") \
+                and self.param_val_buf:
+            if '.' not in self.param_val_buf and self.param_val_buf != '-':
+                self.param_val_buf += ".0"
         self.buffer += self.param_val_buf
         self.param_val_buf = ""
 
     def advance_deterministic(self) -> Optional[List[int]]:
         """Bypasses LLM by appending mandatory syntax tokens directly.
-                Returns the encoded token IDs of text appended,
-                or None if no state change.
+            Returns the encoded token IDs of text appended,
+            or None if no state change.
         """
         appended_text = ""
 
@@ -107,10 +116,12 @@ class JSONStateMachine:
             self.param_val_buf = ""
             self.current_param_name = p_name
             raw_type = p_prop.type.lower()
+            self.raw_param_type = raw_type
             if raw_type in ("string", "str", "text", "txt"):
                 self.current_param_type = "string"
             elif raw_type in ("number", "integer", "int", "float", "num"):
                 self.current_param_type = "number"
+
             elif raw_type in ("boolean", "bool"):
                 self.current_param_type = "boolean"
             else:
@@ -138,6 +149,7 @@ class JSONStateMachine:
     def get_allowed_token_ids(self) -> Set[int]:
         """Resolves all deterministic transitions and returns valid token IDs
             for LLM states.
+            Returns a set of valid token IDs.
         """
         while True:
             det_tokens = self.advance_deterministic()
@@ -186,14 +198,18 @@ class JSONStateMachine:
         )
 
     def _get_allowed_string_tokens(self) -> Set[int]:
-        """Lookup using precomputed token sets."""
+        """Lookup using precomputed token sets.
+            Returns a set of valid IDs.
+        """
         if not self._string_open:
             return self.vocab_mgr.quote_ids
 
         return self.vocab_mgr.valid_string_all_ids
 
     def _get_allowed_number_tokens(self) -> Set[int]:
-        """Lookup using precomputed number sets."""
+        """Lookup using precomputed number sets.
+            Returns a set of valid IDs.
+        """
         if not self.param_val_buf:
             return set(self.vocab_mgr.number_start_ids)
 
@@ -231,10 +247,14 @@ class JSONStateMachine:
     def update(self, token_id: int) -> None:
         """Appends chosen token to appropriate buffer and commits on
         completion.
+            Args: Token ID.
         """
         token_str = self.vocab_mgr.id_to_token[token_id]
 
         if self.current_state == State.SELECT_PARAMETER_VALUE:
+            if self.current_param_type == "string" \
+                    and self.param_val_buf == '"':
+                token_str = token_str.lstrip(' ')
             self.param_val_buf += token_str
         else:
             self.buffer += token_str
@@ -252,7 +272,9 @@ class JSONStateMachine:
             self.deterministic_token_ids.extend(det_tokens)
 
     def _handle_function_selection(self, token_str: str) -> None:
-        """Process token during function name selection."""
+        """Process token during function name selection.
+            Args: Token in string format.
+        """
         self.fn_name_buffer += token_str
 
         matching_fn = next(
@@ -274,6 +296,7 @@ class JSONStateMachine:
 
     def _handle_parameter_value_selection(self, token_str: str) -> None:
         """Process token during parameter value selection.
+            Args: Token in string format.
         """
         if self.current_param_type == "string":
             if not self._string_open:

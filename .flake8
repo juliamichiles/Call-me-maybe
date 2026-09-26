@@ -1,2 +1,2 @@
 [flake8]
-exclude = .venv, __pycache__, .git, llm_sdk
+exclude = .venv, __pycache__, .git, llm_sdk, moulinette

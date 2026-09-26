@@ -12,7 +12,8 @@ from call_me_maybe.errors import CallMeError
 
 
 def main() -> None:
-
+    """ Handles command-line flags and works as the project's orchestrator.
+    """
     parser = argparse.ArgumentParser(
             description="Constrained Decoding Function Caller"
     )

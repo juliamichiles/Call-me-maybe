@@ -1,0 +1,16 @@
+.mypy_cache/
+__pycache__/
+venv/
+.venv/
+env/
+ENV/
+*.pyc
+time_log
+logs/
+moulinette/
+guides/
+to_do.md
+instructions_moulinette.md
+sum_time.pyc
+to_*
+unused/

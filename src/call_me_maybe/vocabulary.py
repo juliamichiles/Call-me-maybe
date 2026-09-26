@@ -26,7 +26,10 @@ class VocabularyManager:
         self._load_and_build()
 
     def _clean_token_string(self, token_str: str) -> str:
-        """Converts tokenizer space markers (e.g., 'Ġ') to standard spaces."""
+        """Converts tokenizer space markers (e.g., 'Ġ') to standard spaces.
+            Args: A raw token string.
+            Returns: Cleaned version of the given string.
+        """
         cleaned = token_str.replace("Ġ", " ")
         return cleaned
 
@@ -54,10 +57,10 @@ class VocabularyManager:
 
             clean_stripped = clean_str.strip()
             if clean_stripped:
-                if clean_stripped in ['-', '.'] or \
-                        clean_stripped.replace('.', '', 1).isdigit():
+                if clean_stripped in ['-', '.'] \
+                        or clean_stripped.isdigit():
                     self.number_start_ids.add(token_id)
-                if clean_stripped.replace('.', '', 1).isdigit():
+                if clean_stripped == '.' or clean_stripped.isdigit():
                     self.number_body_ids.add(token_id)
                 if clean_stripped in ['true', 'false']:
                     self.boolean_ids.add(token_id)
@@ -67,5 +70,8 @@ class VocabularyManager:
         self.valid_string_all_ids = self.quote_ids | self.valid_string_body_ids
 
     def token_ids_that_prefix(self, text: str) -> Set[int]:
-        """Return token IDs whose complete token string is a prefix of text."""
+        """Return token IDs whose complete token string is a prefix of text.
+            Args: A text string.
+            Returns: A set containing token IDs.
+        """
         return self.trie.get_token_ids_that_prefix(text)

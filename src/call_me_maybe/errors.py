@@ -1,3 +1,3 @@
-# TODO: Maybe rename this to something actually usefull
 class CallMeError(Exception):
+    """ Custom error for Call Me Maybe project"""
     ...
