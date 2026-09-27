@@ -344,7 +344,7 @@ class JSONStateMachine:
                         if self.parameter_queue else State.EMIT_END
 
     def get_current_state(self) -> State:
-        """Compatibility helper used by tests: return current state enum."""
+        """Compatibility helper: return current state enum."""
         return self.current_state
 
     def is_complete(self) -> bool:

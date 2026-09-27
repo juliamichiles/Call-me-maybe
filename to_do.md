@@ -1,7 +1,6 @@
 ## LAST SANITY CHECK:
 - [ ] should I submit data/ ???
 - [ ] should I keep '.pythonversion' file?
-- [ ] visualization and schemas are missing docstrings
 - [ ] ensure everything is still running at 42
 - [ ] don't forget to submit llm_sdk
 - [ ] run linters one last time 
@@ -27,6 +26,7 @@
     - [ ] Add a "final graph" with performance profiling for the whole process
 
 ## Fixed:
+- [X] visualization and schemas are missing docstrings
 - [X] accept more keywords for parameter types
 - [X] somehow make the Makefile handle flags
 - [X] visualization:

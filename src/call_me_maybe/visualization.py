@@ -23,6 +23,12 @@ class GenVisualizer:
             max_tokens: int,
             vocab_size: int
     ) -> None:
+        """Initialize the generation visualizer.
+            Args:
+                prompt: User prompt being processed.
+                max_tokens: Maximum number of tokens to generate.
+                vocab_size: Size of the model vocabulary.
+        """
         self.prompt = prompt
         self.max_tokens = max_tokens
         self.vocab_size = vocab_size
@@ -57,7 +63,9 @@ class GenVisualizer:
         self.live.stop()
 
     def update_profiling(self, timings: Dict[str, float]) -> None:
-        """Update the profiling metrics."""
+        """Update the profiling metrics.
+            Args: A dictionary of actions and the time they took.
+        """
         self.timings = timings
 
     def update_constraints(
@@ -65,7 +73,11 @@ class GenVisualizer:
             allowed_ids: Set[int],
             state_machine: "JSONStateMachine"
             ) -> None:
-        """Update information about the current constraints."""
+        """Update information about the current constraints.
+            Args:
+                allowed_ids: Token IDs currently allowed by the state machine.
+                state_machine: State machine controlling constrained decoding.
+        """
         self.allowed_count = len(allowed_ids)
         self.current_state = state_machine.current_state.name
         self.current_buffer = state_machine.get_full_buffer
@@ -84,7 +96,9 @@ class GenVisualizer:
             self,
             logits: Sequence[float]
     ) -> None:
-        """Record the arrival of logits from the LLM."""
+        """Record the arrival of logits from the LLM.
+            Args: Logit values returned by the language model.
+        """
         self.status = f"LLM returned {len(logits):,} logits"
         self._refresh()
 
@@ -95,7 +109,13 @@ class GenVisualizer:
             state_machine: Optional["JSONStateMachine"] = None,
             deterministic: bool = False
     ) -> None:
-        """Record a generated token."""
+        """Record a generated token.
+            Args:
+                token_id: ID of the generated token.
+                token_text: Text represented by the generated token.
+                state_machine: Current state machine, if available.
+                deterministic: Whether the token was emitted deterministically.
+        """
         self.current_token_id = token_id
         self.current_token = token_text
         self.generated_ids.append(token_id)
@@ -113,7 +133,9 @@ class GenVisualizer:
             self,
             state_machine: "JSONStateMachine",
     ) -> None:
-        """Mark generation as complete."""
+        """Mark generation as complete.
+            Args: Final state of the generation state machine.
+        """
         self.completed = True
         self.current_state = state_machine.current_state.name
         self.current_buffer = state_machine.get_full_buffer
@@ -126,7 +148,9 @@ class GenVisualizer:
         self.live.update(self._render())
 
     def _render(self) -> Group:
-        """Build the complete dashboard."""
+        """Build the complete dashboard.
+            Returns: A Rich group containing all dashboard components.
+        """
 
         # three smaller panels side-by-side using a grid
         bottom_grid = Table.grid(expand=True, padding=(0, 1))
@@ -148,7 +172,9 @@ class GenVisualizer:
         )
 
     def _render_header(self) -> Panel:
-        """Render the dashboard header."""
+        """Render the dashboard header.
+            Returns: A Rich panel containing the dashboard title.
+        """
         return Panel(
                 Text(
                     "CALL ME MAYBE — CONSTRAINED DECODING",
@@ -158,7 +184,9 @@ class GenVisualizer:
         )
 
     def _render_prompt(self) -> Panel:
-        """Render the user prompt."""
+        """Render the user prompt.
+            Returns: A Rich panel containing the user prompt.
+        """
         return Panel(
                 Text(self.prompt),
                 title="Prompt",
@@ -166,7 +194,9 @@ class GenVisualizer:
         )
 
     def _render_generation(self) -> Panel:
-        """Render the generated JSON."""
+        """Render the generated JSON.
+            Returns: A Rich panel containing the current generated output.
+        """
         output = self.current_buffer
         table = Table.grid(expand=True)
         table.add_column(ratio=1)
@@ -184,7 +214,9 @@ class GenVisualizer:
         )
 
     def _render_state(self) -> Panel:
-        """Render the state-machine information."""
+        """Render the state-machine information.
+            Returns: A Rich panel containing the decoder state.
+        """
         table = Table.grid(expand=True)
         table.add_column(style="bold", width=18)
         table.add_column()
@@ -200,7 +232,9 @@ class GenVisualizer:
         )
 
     def _render_constraints(self) -> Panel:
-        """Render token constraint statistics."""
+        """Render token constraint statistics.
+            Returns: A Rich panel containing vocabulary constraint statistics.
+        """
         masked = self.vocab_size - self.allowed_count
         # autosizes inside the 1/3 column
         table = Table.grid(expand=True, padding=(0, 1))
@@ -219,7 +253,10 @@ class GenVisualizer:
         return Panel(table, title="constraints", border_style="bright_yellow")
 
     def _render_last_token(self) -> Panel:
-        """Render information about the latest token."""
+        """Render information about the latest token.
+            Returns: A Rich panel containing information about the latest
+            token.
+        """
         table = Table.grid(expand=True, padding=(0, 1))
         table.add_column(style="bold")
         table.add_column(justify="right")
@@ -238,7 +275,9 @@ class GenVisualizer:
         return Panel(table, title="Last Token", border_style="cyan")
 
     def _render_profiling(self) -> Panel:
-        """Render performance profiling charts."""
+        """Render performance profiling charts.
+            Returns: A Rich panel containing profiling metrics.
+        """
         table = Table.grid(expand=True, padding=(0, 1))
         table.add_column(style="bold")
         table.add_column(justify="right")
