@@ -26,7 +26,12 @@ def load_functions_definition(path: str) -> List[FunctionDefinition]:
             r_data = json.load(f)
             return [FunctionDefinition.model_validate(item) for item in r_data]
 
-    except (json.JSONDecodeError, ValidationError, PermissionError) as e:
+    except (
+        json.JSONDecodeError,
+        ValidationError,
+        PermissionError,
+        IsADirectoryError
+    ) as e:
         raise CallMeError(
                 f"Invalid function definitions file format: {e}",
         )
